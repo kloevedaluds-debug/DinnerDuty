@@ -124,18 +124,12 @@ export default function WeekView() {
     assignTaskMutation.mutate({ date, taskType, resident: null });
   };
 
-  const handleSetAloneChoice = (date: string, resident: string) => {
-    if (resident.trim()) {
-      setKitchenPreferenceMutation.mutate({ date, resident: resident.trim() });
-      setNewResidentInputs(prev => ({
-        ...prev,
-        [`${date}-alone`]: ''
-      }));
+  const handleToggleAloneChoice = (date: string, currentlyAlone: boolean) => {
+    if (currentlyAlone) {
+      setKitchenPreferenceMutation.mutate({ date, resident: null });
+    } else {
+      setKitchenPreferenceMutation.mutate({ date, resident: "Ja" });
     }
-  };
-
-  const handleRemoveAloneChoice = (date: string) => {
-    setKitchenPreferenceMutation.mutate({ date, resident: null });
   };
 
   const navigateWeek = (direction: 'prev' | 'next') => {
@@ -324,49 +318,25 @@ export default function WeekView() {
 
                 {/* Kitchen Preference */}
                 <div className="pt-2 border-t border-gray-200">
-                  <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center justify-center mb-2">
                     <span className="text-xs font-medium text-orange-700">
-                      👤 Alene
+                      👤 Alene i køkkenet
                     </span>
-                    {aloneInKitchen && (
-                      <Button
-                        onClick={() => handleRemoveAloneChoice(date)}
-                        variant="ghost"
-                        size="sm"
-                        className="h-6 w-6 p-0 text-red-500 hover:text-red-700"
-                      >
-                        <Minus className="h-3 w-3" />
-                      </Button>
-                    )}
                   </div>
                   
-                  {aloneInKitchen ? (
-                    <div className="text-xs bg-orange-100 text-orange-800 px-2 py-1 rounded">
-                      {aloneInKitchen}
-                    </div>
-                  ) : (
-                    <div className="flex gap-1">
-                      <Input
-                        type="text"
-                        placeholder="Navn"
-                        className="text-xs h-8"
-                        value={newResidentInputs[`${date}-alone`] || ''}
-                        onChange={(e) => updateResidentInput(`${date}-alone`, e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') {
-                            handleSetAloneChoice(date, newResidentInputs[`${date}-alone`] || '');
-                          }
-                        }}
-                      />
-                      <Button
-                        onClick={() => handleSetAloneChoice(date, newResidentInputs[`${date}-alone`] || '')}
-                        size="sm"
-                        className="h-8 w-8 p-0"
-                      >
-                        <Plus className="h-3 w-3" />
-                      </Button>
-                    </div>
-                  )}
+                  <div className="flex justify-center">
+                    <Button
+                      onClick={() => handleToggleAloneChoice(date, !!aloneInKitchen)}
+                      size="sm"
+                      className={`text-xs px-3 py-1 rounded transition-colors duration-200 ${
+                        aloneInKitchen 
+                          ? 'bg-success-500 hover:bg-success-600 text-white' 
+                          : 'bg-gray-200 hover:bg-gray-300 text-gray-700'
+                      }`}
+                    >
+                      {aloneInKitchen ? 'Ja' : 'Nej'}
+                    </Button>
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -377,7 +347,7 @@ export default function WeekView() {
       {/* Footer */}
       <footer className="mt-8 text-center text-gray-500 text-sm">
         <p>💡 Skriv et navn og tryk Enter eller klik + for at tildele opgaver</p>
-        <p className="mt-1">Klik - for at fjerne tildelinger</p>
+        <p className="mt-1">Klik - for at fjerne tildelinger • Alle ændringer gemmes automatisk</p>
       </footer>
     </div>
   );

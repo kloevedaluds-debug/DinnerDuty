@@ -6,6 +6,12 @@ This is a task assignment web application built for managing household chores am
 
 Preferred communication style: Simple, everyday language.
 
+## Recent User Requests (August 2025)
+- Users should be able to input their own names instead of selecting from predefined lists
+- Kitchen preference should be a simple Yes/No toggle instead of name input
+- All changes should be saved automatically (no manual save button needed)
+- Weekly overview functionality is essential for planning
+
 # System Architecture
 
 ## Frontend Architecture

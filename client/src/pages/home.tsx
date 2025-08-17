@@ -133,18 +133,14 @@ export default function Home() {
     assignTaskMutation.mutate({ taskType, resident: null });
   };
 
-  const handleSetAloneChoice = (resident: string) => {
-    if (resident.trim()) {
-      setKitchenPreferenceMutation.mutate(resident.trim());
-      setNewResidentInputs(prev => ({
-        ...prev,
-        'alone': ''
-      }));
+  const handleToggleAloneChoice = () => {
+    const isCurrentlyAlone = !!aloneInKitchen;
+    if (isCurrentlyAlone) {
+      setKitchenPreferenceMutation.mutate(null);
+    } else {
+      // Use a generic "Yes" indicator since it's just a yes/no choice
+      setKitchenPreferenceMutation.mutate("Ja");
     }
-  };
-
-  const handleRemoveAloneChoice = () => {
-    setKitchenPreferenceMutation.mutate(null);
   };
 
   const updateResidentInput = (key: string, value: string) => {
@@ -202,6 +198,7 @@ export default function Home() {
         
         <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
           <p className="text-sm text-blue-800">💡 Skriv et navn og tryk Enter eller klik + for at tildele opgaver</p>
+          <p className="text-xs text-blue-600 mt-1">Alle ændringer gemmes automatisk</p>
         </div>
       </header>
 
@@ -309,37 +306,18 @@ export default function Home() {
               </div>
             </div>
             
-            <div className="flex gap-2">
-              <Input
-                type="text"
-                placeholder="Skriv navn og tryk Enter"
-                className="flex-1"
-                value={newResidentInputs['alone'] || ''}
-                onChange={(e) => updateResidentInput('alone', e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    handleSetAloneChoice(newResidentInputs['alone'] || '');
-                  }
-                }}
-                disabled={setKitchenPreferenceMutation.isPending}
-              />
+            <div className="flex justify-center">
               <Button
-                onClick={() => handleSetAloneChoice(newResidentInputs['alone'] || '')}
-                className="px-3 py-2 bg-success-500 hover:bg-success-600 text-white rounded-lg transition-colors duration-200"
+                onClick={handleToggleAloneChoice}
+                className={`px-6 py-3 rounded-lg font-medium transition-colors duration-200 ${
+                  aloneInKitchen 
+                    ? 'bg-success-500 hover:bg-success-600 text-white' 
+                    : 'bg-gray-200 hover:bg-gray-300 text-gray-700'
+                }`}
                 disabled={setKitchenPreferenceMutation.isPending}
               >
-                <Plus className="h-4 w-4" />
+                {aloneInKitchen ? 'Ja - Vil være alene' : 'Nej - Ikke alene'}
               </Button>
-              {aloneInKitchen && (
-                <Button
-                  onClick={handleRemoveAloneChoice}
-                  variant="outline"
-                  className="px-3 py-2 text-red-600 border-red-600 hover:bg-red-50 rounded-lg transition-colors duration-200"
-                  disabled={setKitchenPreferenceMutation.isPending}
-                >
-                  <Minus className="h-4 w-4" />
-                </Button>
-              )}
             </div>
           </div>
           
@@ -391,22 +369,14 @@ export default function Home() {
       </Card>
 
       {/* Action Buttons */}
-      <div className="flex flex-col sm:flex-row gap-4">
+      <div className="flex justify-center">
         <Button
           onClick={handleResetTasks}
           disabled={resetTasksMutation.isPending}
-          className="flex-1 px-6 py-3 bg-gray-600 hover:bg-gray-700 text-white rounded-xl font-semibold transition-colors duration-200"
+          variant="outline"
+          className="px-6 py-3 rounded-xl font-semibold transition-colors duration-200"
         >
           🔄 Nulstil alle opgaver
-        </Button>
-        <Button
-          className="flex-1 px-6 py-3 bg-primary-600 hover:bg-primary-700 text-white rounded-xl font-semibold transition-colors duration-200"
-          onClick={() => toast({
-            title: "Tildelinger gemt",
-            description: "Dine tildelinger er automatisk gemt.",
-          })}
-        >
-          💾 Gem tildelinger
         </Button>
       </div>
 
