@@ -21,6 +21,32 @@ export type TaskAssignment = typeof taskAssignments.$inferSelect;
 export type TaskType = 'kok' | 'indkoeb' | 'bord' | 'opvask';
 export type Tasks = Record<TaskType, string | null>;
 
-// Resident names
-export const RESIDENTS = ["Anna", "Bo", "Carla", "David"] as const;
-export type Resident = typeof RESIDENTS[number];
+// Helper functions for date operations
+export function getWeekDates(startDate: string): string[] {
+  const dates: string[] = [];
+  const start = new Date(startDate + 'T00:00:00');
+  
+  for (let i = 0; i < 7; i++) {
+    const date = new Date(start);
+    date.setDate(start.getDate() + i);
+    dates.push(date.toISOString().split('T')[0]);
+  }
+  
+  return dates;
+}
+
+export function getCurrentWeekStart(): string {
+  const today = new Date();
+  const dayOfWeek = today.getDay();
+  const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek; // Monday = 1, Sunday = 0
+  const monday = new Date(today);
+  monday.setDate(today.getDate() + mondayOffset);
+  return monday.toISOString().split('T')[0];
+}
+
+export function getNextWeekStart(): string {
+  const currentWeekStart = getCurrentWeekStart();
+  const nextWeek = new Date(currentWeekStart + 'T00:00:00');
+  nextWeek.setDate(nextWeek.getDate() + 7);
+  return nextWeek.toISOString().split('T')[0];
+}

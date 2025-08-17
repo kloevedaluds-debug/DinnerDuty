@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { z } from "zod";
-import { RESIDENTS } from "@shared/schema";
+import { getWeekDates, getCurrentWeekStart, getNextWeekStart } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Get current date in YYYY-MM-DD format
@@ -37,7 +37,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const schema = z.object({
         date: z.string().optional(),
         taskType: z.enum(['kok', 'indkoeb', 'bord', 'opvask']),
-        resident: z.enum(RESIDENTS).nullable(),
+        resident: z.string().nullable(),
       });
 
       const { date = getCurrentDate(), taskType, resident } = schema.parse(req.body);
@@ -58,7 +58,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const schema = z.object({
         date: z.string().optional(),
-        resident: z.enum(RESIDENTS).nullable(),
+        resident: z.string().nullable(),
       });
 
       const { date = getCurrentDate(), resident } = schema.parse(req.body);
@@ -71,6 +71,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } else {
         res.status(500).json({ message: "Failed to set kitchen preference" });
       }
+    }
+  });
+
+  // Get week view with all assignments
+  app.get("/api/tasks/week/:weekStart?", async (req, res) => {
+    try {
+      const weekStart = req.params.weekStart || getCurrentWeekStart();
+      const weekDates = getWeekDates(weekStart);
+      const assignments = await storage.getTaskAssignmentsByDateRange(weekDates);
+      
+      res.json({
+        weekStart,
+        dates: weekDates,
+        assignments,
+      });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch week assignments" });
     }
   });
 

@@ -1,11 +1,12 @@
-import { type TaskAssignment, type InsertTaskAssignment, type Tasks, type Resident } from "@shared/schema";
+import { type TaskAssignment, type InsertTaskAssignment, type Tasks } from "@shared/schema";
 import { randomUUID } from "crypto";
 
 export interface IStorage {
   getTaskAssignmentByDate(date: string): Promise<TaskAssignment | undefined>;
+  getTaskAssignmentsByDateRange(dates: string[]): Promise<TaskAssignment[]>;
   createOrUpdateTaskAssignment(assignment: InsertTaskAssignment): Promise<TaskAssignment>;
-  assignTask(date: string, taskType: string, resident: Resident | null): Promise<TaskAssignment>;
-  setAloneInKitchen(date: string, resident: Resident | null): Promise<TaskAssignment>;
+  assignTask(date: string, taskType: string, resident: string | null): Promise<TaskAssignment>;
+  setAloneInKitchen(date: string, resident: string | null): Promise<TaskAssignment>;
   resetTasks(date: string): Promise<TaskAssignment>;
 }
 
@@ -18,6 +19,27 @@ export class MemStorage implements IStorage {
 
   async getTaskAssignmentByDate(date: string): Promise<TaskAssignment | undefined> {
     return this.taskAssignments.get(date);
+  }
+
+  async getTaskAssignmentsByDateRange(dates: string[]): Promise<TaskAssignment[]> {
+    const assignments: TaskAssignment[] = [];
+    
+    for (const date of dates) {
+      const assignment = this.taskAssignments.get(date);
+      if (assignment) {
+        assignments.push(assignment);
+      } else {
+        // Create default empty assignment for dates without data
+        assignments.push({
+          id: randomUUID(),
+          date,
+          tasks: { kok: null, indkoeb: null, bord: null, opvask: null },
+          aloneInKitchen: null,
+        });
+      }
+    }
+    
+    return assignments;
   }
 
   async createOrUpdateTaskAssignment(assignment: InsertTaskAssignment): Promise<TaskAssignment> {
@@ -34,13 +56,14 @@ export class MemStorage implements IStorage {
       const newAssignment: TaskAssignment = {
         id: randomUUID(),
         ...assignment,
+        aloneInKitchen: assignment.aloneInKitchen ?? null,
       };
       this.taskAssignments.set(assignment.date, newAssignment);
       return newAssignment;
     }
   }
 
-  async assignTask(date: string, taskType: string, resident: Resident | null): Promise<TaskAssignment> {
+  async assignTask(date: string, taskType: string, resident: string | null): Promise<TaskAssignment> {
     let existing = await this.getTaskAssignmentByDate(date);
     
     if (!existing) {
@@ -61,7 +84,7 @@ export class MemStorage implements IStorage {
     });
   }
 
-  async setAloneInKitchen(date: string, resident: Resident | null): Promise<TaskAssignment> {
+  async setAloneInKitchen(date: string, resident: string | null): Promise<TaskAssignment> {
     let existing = await this.getTaskAssignmentByDate(date);
     
     if (!existing) {
@@ -74,7 +97,7 @@ export class MemStorage implements IStorage {
 
     return this.createOrUpdateTaskAssignment({
       date,
-      tasks: existing.tasks,
+      tasks: existing.tasks as Tasks,
       aloneInKitchen: resident,
     });
   }

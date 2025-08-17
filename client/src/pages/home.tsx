@@ -3,12 +3,14 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { da } from "date-fns/locale";
+import { Link } from "wouter";
+import { Calendar, Plus, Minus } from "lucide-react";
 
 type TaskType = 'kok' | 'indkoeb' | 'bord' | 'opvask';
-type Resident = "Anna" | "Bo" | "Carla" | "David";
 type Tasks = Record<TaskType, string | null>;
 
 interface TaskAssignment {
@@ -16,8 +18,6 @@ interface TaskAssignment {
   tasks: Tasks;
   aloneInKitchen: string | null;
 }
-
-const RESIDENTS: Resident[] = ["Anna", "Bo", "Carla", "David"];
 
 const TASK_CONFIG = {
   kok: { emoji: "🍳", title: "Kok", description: "Tilberede aftensmaden" },
@@ -37,6 +37,7 @@ function formatDanishDate(dateStr: string): string {
 
 export default function Home() {
   const [currentDate] = useState(getCurrentDate());
+  const [newResidentInputs, setNewResidentInputs] = useState<Record<string, string>>({});
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -46,7 +47,7 @@ export default function Home() {
   });
 
   const assignTaskMutation = useMutation({
-    mutationFn: async ({ taskType, resident }: { taskType: TaskType; resident: Resident | null }) => {
+    mutationFn: async ({ taskType, resident }: { taskType: TaskType; resident: string | null }) => {
       const response = await apiRequest('POST', '/api/tasks/assign', {
         date: currentDate,
         taskType,
@@ -71,7 +72,7 @@ export default function Home() {
   });
 
   const setKitchenPreferenceMutation = useMutation({
-    mutationFn: async (resident: Resident | null) => {
+    mutationFn: async (resident: string | null) => {
       const response = await apiRequest('POST', '/api/tasks/kitchen-preference', {
         date: currentDate,
         resident,
@@ -117,14 +118,40 @@ export default function Home() {
     },
   });
 
-  const handleAssignTask = (taskType: TaskType, resident: Resident) => {
-    assignTaskMutation.mutate({ taskType, resident });
+  const handleAssignTask = (taskType: TaskType, resident: string) => {
+    if (resident.trim()) {
+      assignTaskMutation.mutate({ taskType, resident: resident.trim() });
+      // Clear input after assignment
+      setNewResidentInputs(prev => ({
+        ...prev,
+        [taskType]: ''
+      }));
+    }
   };
 
-  const handleSetAloneChoice = (resident: Resident) => {
-    const currentChoice = assignment?.aloneInKitchen;
-    const newChoice = currentChoice === resident ? null : resident;
-    setKitchenPreferenceMutation.mutate(newChoice);
+  const handleRemoveTask = (taskType: TaskType) => {
+    assignTaskMutation.mutate({ taskType, resident: null });
+  };
+
+  const handleSetAloneChoice = (resident: string) => {
+    if (resident.trim()) {
+      setKitchenPreferenceMutation.mutate(resident.trim());
+      setNewResidentInputs(prev => ({
+        ...prev,
+        'alone': ''
+      }));
+    }
+  };
+
+  const handleRemoveAloneChoice = () => {
+    setKitchenPreferenceMutation.mutate(null);
+  };
+
+  const updateResidentInput = (key: string, value: string) => {
+    setNewResidentInputs(prev => ({
+      ...prev,
+      [key]: value
+    }));
   };
 
   const handleResetTasks = () => {
@@ -153,8 +180,28 @@ export default function Home() {
       <header className="text-center mb-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">Aftensmad i dag</h1>
         <p className="text-gray-600 font-medium">{formatDanishDate(currentDate)}</p>
+        
+        {/* Navigation */}
+        <div className="mt-4 flex justify-center gap-2">
+          <Button
+            variant="outline"
+            className="px-4 py-2"
+          >
+            I dag
+          </Button>
+          <Link href="/week">
+            <Button
+              variant="default"
+              className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white"
+            >
+              <Calendar className="h-4 w-4 mr-2" />
+              Ugeoversigt
+            </Button>
+          </Link>
+        </div>
+        
         <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
-          <p className="text-sm text-blue-800">💡 Vælg dine opgaver for aftensmaden i dag</p>
+          <p className="text-sm text-blue-800">💡 Skriv et navn og tryk Enter eller klik + for at tildele opgaver</p>
         </div>
       </header>
 
@@ -193,17 +240,37 @@ export default function Home() {
                     </div>
                   </div>
                   
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                    {RESIDENTS.map((resident) => (
+                  <div className="flex gap-2">
+                    <Input
+                      type="text"
+                      placeholder="Skriv navn og tryk Enter"
+                      className="flex-1"
+                      value={newResidentInputs[taskType] || ''}
+                      onChange={(e) => updateResidentInput(taskType, e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          handleAssignTask(taskType as TaskType, newResidentInputs[taskType] || '');
+                        }
+                      }}
+                      disabled={assignTaskMutation.isPending}
+                    />
+                    <Button
+                      onClick={() => handleAssignTask(taskType as TaskType, newResidentInputs[taskType] || '')}
+                      className="px-3 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-lg transition-colors duration-200"
+                      disabled={assignTaskMutation.isPending}
+                    >
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                    {assignedResident && (
                       <Button
-                        key={resident}
-                        onClick={() => handleAssignTask(taskType as TaskType, resident)}
-                        className="px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-lg font-medium transition-colors duration-200 text-sm"
+                        onClick={() => handleRemoveTask(taskType as TaskType)}
+                        variant="outline"
+                        className="px-3 py-2 text-red-600 border-red-600 hover:bg-red-50 rounded-lg transition-colors duration-200"
                         disabled={assignTaskMutation.isPending}
                       >
-                        {resident}
+                        <Minus className="h-4 w-4" />
                       </Button>
-                    ))}
+                    )}
                   </div>
                 </div>
               );
@@ -242,18 +309,37 @@ export default function Home() {
               </div>
             </div>
             
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-              {RESIDENTS.map((resident) => (
+            <div className="flex gap-2">
+              <Input
+                type="text"
+                placeholder="Skriv navn og tryk Enter"
+                className="flex-1"
+                value={newResidentInputs['alone'] || ''}
+                onChange={(e) => updateResidentInput('alone', e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    handleSetAloneChoice(newResidentInputs['alone'] || '');
+                  }
+                }}
+                disabled={setKitchenPreferenceMutation.isPending}
+              />
+              <Button
+                onClick={() => handleSetAloneChoice(newResidentInputs['alone'] || '')}
+                className="px-3 py-2 bg-success-500 hover:bg-success-600 text-white rounded-lg transition-colors duration-200"
+                disabled={setKitchenPreferenceMutation.isPending}
+              >
+                <Plus className="h-4 w-4" />
+              </Button>
+              {aloneInKitchen && (
                 <Button
-                  key={resident}
-                  onClick={() => handleSetAloneChoice(resident)}
-                  className="px-4 py-2 bg-success-500 hover:bg-success-600 text-white rounded-lg font-medium transition-colors duration-200 text-sm"
+                  onClick={handleRemoveAloneChoice}
+                  variant="outline"
+                  className="px-3 py-2 text-red-600 border-red-600 hover:bg-red-50 rounded-lg transition-colors duration-200"
                   disabled={setKitchenPreferenceMutation.isPending}
-                  variant={aloneInKitchen === resident ? "default" : "outline"}
                 >
-                  {resident}
+                  <Minus className="h-4 w-4" />
                 </Button>
-              ))}
+              )}
             </div>
           </div>
           
