@@ -28,10 +28,10 @@ interface WeekData {
 }
 
 const TASK_CONFIG = {
-  kok: { emoji: "🍳", title: "Kok", shortTitle: "Kok" },
-  indkoeb: { emoji: "🛒", title: "Indkøb", shortTitle: "Indkøb" },
-  bord: { emoji: "🍽️", title: "Dække bord", shortTitle: "Bord" },
-  opvask: { emoji: "🧽", title: "Vaske op", shortTitle: "Opvask" },
+  kok: { emoji: "🍳", title: "Kok", shortTitle: "Kok", color: "cooking", bgClass: "task-cooking" },
+  indkoeb: { emoji: "🛒", title: "Indkøb", shortTitle: "Indkøb", color: "shopping", bgClass: "task-shopping" },
+  bord: { emoji: "🍽️", title: "Dække bord", shortTitle: "Bord", color: "table", bgClass: "task-table" },
+  opvask: { emoji: "🧽", title: "Vaske op", shortTitle: "Opvask", color: "dishes", bgClass: "task-dishes" },
 };
 
 const WEEKDAYS = ['Man', 'Tir', 'Ons', 'Tor', 'Fre', 'Lør', 'Søn'];
@@ -174,69 +174,78 @@ export default function WeekView() {
     <div className="container mx-auto px-4 py-6 max-w-6xl">
       {/* Header */}
       <header className="text-center mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-4">Ugeoversigt</h1>
+        <div className="mb-6">
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-primary-600 to-primary-800 bg-clip-text text-transparent mb-2">
+            Ugeoversigt
+          </h1>
+          <p className="text-lg text-gray-600 font-medium">Planlæg aftensmad for hele ugen</p>
+        </div>
         
         {/* Navigation */}
-        <div className="mb-4 flex justify-center gap-2">
+        <div className="mb-6 flex justify-center gap-3">
           <Link href="/">
             <Button
               variant="outline"
-              className="px-4 py-2"
+              className="px-6 py-3 rounded-xl font-semibold hover:bg-gray-50 transition-all duration-200"
             >
-              I dag
+              🍽️ I dag
             </Button>
           </Link>
           <Button
             variant="default"
-            className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white"
+            className="px-6 py-3 rounded-xl font-semibold bg-primary-600 hover:bg-primary-700 text-white shadow-lg"
           >
-            Ugeoversigt
+            📅 Ugeoversigt
           </Button>
         </div>
         
         {/* Week Navigation */}
-        <div className="flex items-center justify-center gap-4 mb-4">
-          <Button
-            onClick={() => navigateWeek('prev')}
-            variant="outline"
-            size="sm"
-            className="px-3 py-2"
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          
-          <div className="text-center">
-            <h2 className="text-xl font-semibold text-gray-800">
-              {weekData ? formatWeekTitle(weekData.weekStart) : ''}
-            </h2>
+        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-200 mb-6">
+          <div className="flex items-center justify-center gap-4 mb-4">
+            <Button
+              onClick={() => navigateWeek('prev')}
+              variant="outline"
+              size="sm"
+              className="px-4 py-3 rounded-xl hover:bg-gray-50 transition-all duration-200"
+            >
+              <ChevronLeft className="h-5 w-5" />
+            </Button>
+            
+            <div className="text-center flex-1">
+              <h2 className="text-2xl font-bold text-gray-800">
+                {weekData ? formatWeekTitle(weekData.weekStart) : ''}
+              </h2>
+            </div>
+            
+            <Button
+              onClick={() => navigateWeek('next')}
+              variant="outline"
+              size="sm"
+              className="px-4 py-3 rounded-xl hover:bg-gray-50 transition-all duration-200"
+            >
+              <ChevronRight className="h-5 w-5" />
+            </Button>
           </div>
-          
-          <Button
-            onClick={() => navigateWeek('next')}
-            variant="outline"
-            size="sm"
-            className="px-3 py-2"
-          >
-            <ChevronRight className="h-4 w-4" />
-          </Button>
-        </div>
 
-        {/* Quick Navigation */}
-        <div className="flex justify-center gap-2">
-          <Button
-            onClick={goToCurrentWeek}
-            variant="outline"
-            size="sm"
-          >
-            Denne uge
-          </Button>
-          <Button
-            onClick={goToNextWeek}
-            variant="outline"
-            size="sm"
-          >
-            Næste uge
-          </Button>
+          {/* Quick Navigation */}
+          <div className="flex justify-center gap-3">
+            <Button
+              onClick={goToCurrentWeek}
+              variant="outline"
+              size="sm"
+              className="px-4 py-2 rounded-lg font-medium hover:bg-blue-50 hover:border-blue-300 transition-all duration-200"
+            >
+              📅 Denne uge
+            </Button>
+            <Button
+              onClick={goToNextWeek}
+              variant="outline"  
+              size="sm"
+              className="px-4 py-2 rounded-lg font-medium hover:bg-green-50 hover:border-green-300 transition-all duration-200"
+            >
+              ⏭️ Næste uge
+            </Button>
+          </div>
         </div>
       </header>
 
@@ -248,16 +257,25 @@ export default function WeekView() {
           const aloneInKitchen = assignment?.aloneInKitchen;
           const isToday = date === new Date().toISOString().split('T')[0];
 
+          const tasksAssigned = Object.values(tasks).filter(Boolean).length;
+          const totalTasks = Object.keys(tasks).length;
+          const isCompleteDay = tasksAssigned === totalTasks;
+          
           return (
-            <Card key={date} className={`${isToday ? 'ring-2 ring-primary-500' : ''}`}>
+            <Card key={date} className={`rounded-2xl transition-all duration-200 hover:shadow-lg ${isToday ? 'ring-2 ring-primary-500 shadow-lg' : 'shadow-sm'} ${isCompleteDay ? 'bg-gradient-to-br from-green-50 to-emerald-50 border-green-200' : ''}`}>
               <CardHeader className="pb-3">
                 <CardTitle className="text-center">
-                  <div className="text-sm font-medium text-gray-600">
+                  <div className={`text-sm font-medium ${isToday ? 'text-primary-600' : 'text-gray-600'}`}>
                     {WEEKDAYS[dayIndex]}
                   </div>
-                  <div className={`text-lg font-bold ${isToday ? 'text-primary-600' : 'text-gray-900'}`}>
+                  <div className={`text-xl font-bold ${isToday ? 'text-primary-600' : 'text-gray-900'}`}>
                     {formatDanishDate(date)}
                   </div>
+                  {isCompleteDay && (
+                    <div className="mt-2 text-xs font-semibold text-green-600 bg-green-100 px-2 py-1 rounded-full inline-block">
+                      ✓ Komplet
+                    </div>
+                  )}
                 </CardTitle>
               </CardHeader>
               
@@ -268,17 +286,22 @@ export default function WeekView() {
                   const inputKey = `${date}-${taskType}`;
                   
                   return (
-                    <div key={taskType} className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-medium text-gray-700">
-                          {config.emoji} {config.shortTitle}
-                        </span>
+                    <div key={taskType} className={`rounded-lg p-3 transition-all duration-200 ${assignedResident ? 'task-assigned' : config.bgClass}`}>
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center space-x-2">
+                          <div className="text-lg p-1 rounded-md bg-white/50">
+                            {config.emoji}
+                          </div>
+                          <span className="text-xs font-semibold text-gray-800">
+                            {config.shortTitle}
+                          </span>
+                        </div>
                         {assignedResident && (
                           <Button
                             onClick={() => handleRemoveTask(date, taskType as TaskType)}
                             variant="ghost"
                             size="sm"
-                            className="h-6 w-6 p-0 text-red-500 hover:text-red-700"
+                            className="h-6 w-6 p-0 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-full transition-all duration-200"
                           >
                             <Minus className="h-3 w-3" />
                           </Button>
@@ -286,15 +309,15 @@ export default function WeekView() {
                       </div>
                       
                       {assignedResident ? (
-                        <div className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">
-                          {assignedResident}
+                        <div className="text-xs bg-green-500 text-white px-3 py-1 rounded-full font-semibold text-center">
+                          ✓ {assignedResident}
                         </div>
                       ) : (
-                        <div className="flex gap-1">
+                        <div className="space-y-2">
                           <Input
                             type="text"
-                            placeholder="Navn"
-                            className="text-xs h-8"
+                            placeholder="Skriv navn..."
+                            className="text-xs h-8 rounded-lg border-2 border-dashed border-gray-300 bg-white/70"
                             value={newResidentInputs[inputKey] || ''}
                             onChange={(e) => updateResidentInput(inputKey, e.target.value)}
                             onKeyDown={(e) => {
@@ -306,9 +329,10 @@ export default function WeekView() {
                           <Button
                             onClick={() => handleAssignTask(date, taskType as TaskType, newResidentInputs[inputKey] || '')}
                             size="sm"
-                            className="h-8 w-8 p-0"
+                            className="w-full h-6 text-xs rounded-lg bg-primary-500 hover:bg-primary-600 text-white font-medium"
                           >
-                            <Plus className="h-3 w-3" />
+                            <Plus className="h-3 w-3 mr-1" />
+                            Tildel
                           </Button>
                         </div>
                       )}
@@ -317,24 +341,27 @@ export default function WeekView() {
                 })}
 
                 {/* Kitchen Preference */}
-                <div className="pt-2 border-t border-gray-200">
-                  <div className="flex items-center justify-center mb-2">
-                    <span className="text-xs font-medium text-orange-700">
-                      👤 Alene i køkkenet
-                    </span>
-                  </div>
-                  
-                  <div className="flex justify-center">
+                <div className={`rounded-lg p-3 transition-all duration-300 ${aloneInKitchen ? 'bg-gradient-to-br from-orange-50 to-amber-50 border-2 border-orange-200' : 'bg-gradient-to-br from-gray-50 to-slate-50 border-2 border-gray-200'}`}>
+                  <div className="text-center space-y-2">
+                    <div className="flex items-center justify-center space-x-2">
+                      <div className={`text-lg p-1 rounded-full ${aloneInKitchen ? 'bg-orange-200' : 'bg-gray-200'}`}>
+                        👤
+                      </div>
+                      <span className="text-xs font-semibold text-gray-800">
+                        Køkken
+                      </span>
+                    </div>
+                    
                     <Button
                       onClick={() => handleToggleAloneChoice(date, !!aloneInKitchen)}
                       size="sm"
-                      className={`text-xs px-3 py-1 rounded transition-colors duration-200 ${
+                      className={`text-xs px-4 py-2 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 ${
                         aloneInKitchen 
-                          ? 'bg-success-500 hover:bg-success-600 text-white' 
-                          : 'bg-gray-200 hover:bg-gray-300 text-gray-700'
+                          ? 'bg-orange-500 hover:bg-orange-600 text-white shadow-sm' 
+                          : 'bg-gray-300 hover:bg-gray-400 text-gray-700'
                       }`}
                     >
-                      {aloneInKitchen ? 'Ja' : 'Nej'}
+                      {aloneInKitchen ? '👤 Alene' : '👥 Delt'}
                     </Button>
                   </div>
                 </div>
@@ -345,9 +372,26 @@ export default function WeekView() {
       </div>
 
       {/* Footer */}
-      <footer className="mt-8 text-center text-gray-500 text-sm">
-        <p>💡 Skriv et navn og tryk Enter eller klik + for at tildele opgaver</p>
-        <p className="mt-1">Klik - for at fjerne tildelinger • Alle ændringer gemmes automatisk</p>
+      <footer className="mt-8 bg-white rounded-2xl p-6 shadow-sm border border-gray-200">
+        <div className="text-center space-y-2">
+          <div className="flex justify-center items-center space-x-2 text-blue-600">
+            <span className="text-lg">💡</span>
+            <span className="text-sm font-semibold">Sådan bruger du ugeoversigten</span>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs text-gray-600 max-w-2xl mx-auto">
+            <div className="bg-blue-50 p-3 rounded-lg">
+              <span className="font-medium text-blue-800">Tildel opgaver:</span><br />
+              Skriv et navn og tryk Enter eller klik "Tildel"
+            </div>
+            <div className="bg-red-50 p-3 rounded-lg">
+              <span className="font-medium text-red-800">Fjern opgaver:</span><br />
+              Klik på minus-knappen (-) ved tildelte opgaver
+            </div>
+          </div>
+          <p className="text-xs text-gray-500 mt-3">
+            ✅ Alle ændringer gemmes automatisk • 📅 Komplet planlagt dage markeres med grøn baggrund
+          </p>
+        </div>
       </footer>
     </div>
   );

@@ -20,10 +20,10 @@ interface TaskAssignment {
 }
 
 const TASK_CONFIG = {
-  kok: { emoji: "🍳", title: "Kok", description: "Tilberede aftensmaden" },
-  indkoeb: { emoji: "🛒", title: "Indkøb", description: "Handle ingredienser" },
-  bord: { emoji: "🍽️", title: "Dække bord", description: "Sætte bordet til aftensmad" },
-  opvask: { emoji: "🧽", title: "Vaske op", description: "Rydde op efter måltidet" },
+  kok: { emoji: "🍳", title: "Kok", description: "Tilberede aftensmaden", color: "cooking", bgClass: "task-cooking" },
+  indkoeb: { emoji: "🛒", title: "Indkøb", description: "Handle ingredienser", color: "shopping", bgClass: "task-shopping" },
+  bord: { emoji: "🍽️", title: "Dække bord", description: "Sætte bordet til aftensmad", color: "table", bgClass: "task-table" },
+  opvask: { emoji: "🧽", title: "Vaske op", description: "Rydde op efter måltidet", color: "dishes", bgClass: "task-dishes" },
 };
 
 function getCurrentDate(): string {
@@ -171,34 +171,40 @@ export default function Home() {
   const aloneInKitchen = assignment?.aloneInKitchen;
 
   return (
-    <div className="container mx-auto px-4 py-6 max-w-2xl">
+    <div className="container mx-auto px-4 py-6 max-w-2xl slide-in-from-bottom">
       {/* Header Section */}
       <header className="text-center mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Aftensmad i dag</h1>
-        <p className="text-gray-600 font-medium">{formatDanishDate(currentDate)}</p>
+        <div className="mb-4">
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-primary-600 to-primary-800 bg-clip-text text-transparent mb-2">
+            Aftensmad i dag
+          </h1>
+          <p className="text-lg text-gray-600 font-medium">{formatDanishDate(currentDate)}</p>
+        </div>
         
         {/* Navigation */}
-        <div className="mt-4 flex justify-center gap-2">
+        <div className="mt-6 flex justify-center gap-3">
           <Button
-            variant="outline"
-            className="px-4 py-2"
+            variant="default"
+            className="px-6 py-3 rounded-xl font-semibold bg-primary-600 hover:bg-primary-700 text-white shadow-lg"
           >
-            I dag
+            🍽️ I dag
           </Button>
           <Link href="/week">
             <Button
-              variant="default"
-              className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white"
+              variant="outline"
+              className="px-6 py-3 rounded-xl font-semibold hover:bg-gray-50 transition-all duration-200"
             >
-              <Calendar className="h-4 w-4 mr-2" />
-              Ugeoversigt
+              📅 Ugeoversigt
             </Button>
           </Link>
         </div>
         
-        <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
-          <p className="text-sm text-blue-800">💡 Skriv et navn og tryk Enter eller klik + for at tildele opgaver</p>
-          <p className="text-xs text-blue-600 mt-1">Alle ændringer gemmes automatisk</p>
+        <div className="mt-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-200">
+          <div className="text-center space-y-1">
+            <p className="text-sm font-semibold text-blue-800">💡 Hvordan bruger du appen</p>
+            <p className="text-xs text-blue-700">Skriv et navn og tryk Enter for at tildele opgaver</p>
+            <p className="text-xs text-blue-600">✅ Alle ændringer gemmes automatisk</p>
+          </div>
         </div>
       </header>
 
@@ -215,10 +221,12 @@ export default function Home() {
               const assignedResident = tasks[taskType as TaskType];
               
               return (
-                <div key={taskType} className="border border-gray-200 rounded-xl p-5 bg-gray-50">
+                <div key={taskType} className={`border border-gray-200 rounded-xl p-5 transition-all duration-200 hover:shadow-md ${assignedResident ? 'task-assigned' : config.bgClass}`}>
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center space-x-3">
-                      <span className="text-2xl">{config.emoji}</span>
+                      <div className="text-3xl p-2 rounded-full bg-white/50 backdrop-blur-sm">
+                        {config.emoji}
+                      </div>
                       <div>
                         <h3 className="font-semibold text-gray-900 text-lg">{config.title}</h3>
                         <p className="text-sm text-gray-600">{config.description}</p>
@@ -226,13 +234,19 @@ export default function Home() {
                     </div>
                     <div className="text-right">
                       {assignedResident ? (
-                        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                          {assignedResident}
-                        </span>
+                        <div className="flex flex-col items-end gap-1">
+                          <span className="inline-flex items-center px-4 py-2 rounded-full text-sm font-semibold bg-green-500 text-white shadow-sm">
+                            ✓ {assignedResident}
+                          </span>
+                          <span className="text-xs text-green-600 font-medium">Tildelt</span>
+                        </div>
                       ) : (
-                        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                          Ingen valgt
-                        </span>
+                        <div className="flex flex-col items-end gap-1">
+                          <span className="inline-flex items-center px-4 py-2 rounded-full text-sm font-medium bg-gray-100 text-gray-600 border-2 border-dashed border-gray-300">
+                            Ledig
+                          </span>
+                          <span className="text-xs text-gray-500">Ingen valgt</span>
+                        </div>
                       )}
                     </div>
                   </div>
@@ -278,93 +292,136 @@ export default function Home() {
 
       {/* Kitchen Preference Section */}
       <Card className="rounded-2xl shadow-sm border border-gray-200 overflow-hidden mb-8">
-        <div className="bg-gradient-to-r from-warning-500 to-orange-500 px-6 py-4">
+        <div className="bg-gradient-to-r from-orange-400 to-amber-500 px-6 py-4">
           <h2 className="text-xl font-semibold text-white flex items-center">
-            <span className="mr-2">👤</span>
+            <div className="mr-3 text-2xl p-2 rounded-full bg-white/20 backdrop-blur-sm">👤</div>
             Køkken præference
           </h2>
-          <p className="text-orange-100 text-sm mt-1">Vælg hvis du foretrækker at være alene i køkkenet</p>
+          <p className="text-orange-100 text-sm mt-1">Vil du være alene i køkkenet i dag?</p>
         </div>
         
-        <CardContent className="p-6">
-          <div className="border border-gray-200 rounded-xl p-5 bg-warning-50">
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h3 className="font-semibold text-gray-900 text-lg">Alene i køkkenet</h3>
-                <p className="text-sm text-gray-600">Jeg foretrækker at lave mad alene</p>
+        <CardContent className="p-8">
+          <div className={`rounded-xl p-6 transition-all duration-300 ${aloneInKitchen ? 'bg-gradient-to-br from-green-50 to-emerald-50 border-2 border-green-200' : 'bg-gradient-to-br from-gray-50 to-slate-50 border-2 border-gray-200'}`}>
+            <div className="text-center">
+              <div className="mb-6">
+                <div className={`mx-auto w-16 h-16 rounded-full flex items-center justify-center text-2xl mb-3 transition-all duration-300 ${aloneInKitchen ? 'bg-green-500 text-white' : 'bg-gray-300 text-gray-600'}`}>
+                  {aloneInKitchen ? '✓' : '👥'}
+                </div>
+                <h3 className="font-semibold text-gray-900 text-xl mb-2">
+                  {aloneInKitchen ? 'Du vil være alene i køkkenet' : 'Delt køkken i dag'}
+                </h3>
+                <p className="text-sm text-gray-600">
+                  {aloneInKitchen 
+                    ? 'Du har valgt at lave mad alene i dag' 
+                    : 'Køkkenet er åbent for alle i dag'
+                  }
+                </p>
               </div>
-              <div className="text-right">
-                {aloneInKitchen ? (
-                  <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                    {aloneInKitchen}
-                  </span>
-                ) : (
-                  <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                    Ingen valgt
-                  </span>
-                )}
-              </div>
-            </div>
-            
-            <div className="flex justify-center">
+              
               <Button
                 onClick={handleToggleAloneChoice}
-                className={`px-6 py-3 rounded-lg font-medium transition-colors duration-200 ${
+                size="lg"
+                className={`px-8 py-4 rounded-xl font-semibold text-lg transition-all duration-300 transform hover:scale-105 ${
                   aloneInKitchen 
-                    ? 'bg-success-500 hover:bg-success-600 text-white' 
-                    : 'bg-gray-200 hover:bg-gray-300 text-gray-700'
+                    ? 'bg-green-500 hover:bg-green-600 text-white shadow-lg' 
+                    : 'bg-primary-500 hover:bg-primary-600 text-white shadow-lg'
                 }`}
                 disabled={setKitchenPreferenceMutation.isPending}
               >
-                {aloneInKitchen ? 'Ja - Vil være alene' : 'Nej - Ikke alene'}
+                {aloneInKitchen ? '🤝 Skift til delt køkken' : '👤 Vælg at være alene'}
               </Button>
             </div>
           </div>
           
-          <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
-            <p className="text-sm text-blue-800">
-              <span className="font-medium">💡 Tip:</span> 
-              Hvis ingen vælger "alene i køkkenet", kan alle være i køkkenet samtidig.
-            </p>
+          <div className="mt-6 p-4 bg-blue-50 rounded-xl border border-blue-200">
+            <div className="flex items-start space-x-3">
+              <div className="text-blue-500 text-lg">💡</div>
+              <div>
+                <p className="text-sm text-blue-800 font-medium mb-1">Hvordan virker det?</p>
+                <p className="text-xs text-blue-700">
+                  Hvis du vælger "være alene", kan de andre se det og respektere dit ønske om at have køkkenet for dig selv.
+                </p>
+              </div>
+            </div>
           </div>
         </CardContent>
       </Card>
 
       {/* Summary Section */}
       <Card className="rounded-2xl shadow-sm border border-gray-200 overflow-hidden mb-8">
-        <div className="bg-gradient-to-r from-gray-700 to-gray-800 px-6 py-4">
-          <h2 className="text-xl font-semibold text-white">Dagens oversigt</h2>
-          <p className="text-gray-300 text-sm mt-1">Samlet overblik over aftensmad tildelinger</p>
+        <div className="bg-gradient-to-r from-slate-600 to-slate-800 px-6 py-4">
+          <h2 className="text-xl font-semibold text-white flex items-center">
+            <div className="mr-3 text-2xl p-2 rounded-full bg-white/20 backdrop-blur-sm">📋</div>
+            Dagens oversigt
+          </h2>
+          <p className="text-slate-300 text-sm mt-1">Status på alle opgaver og præferencer</p>
         </div>
         
         <CardContent className="p-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="space-y-3">
             {Object.entries(TASK_CONFIG).map(([taskType, config]) => {
               const assignedResident = tasks[taskType as TaskType];
               
               return (
-                <div key={taskType} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                  <span className="text-sm font-medium text-gray-700">
-                    {config.emoji} {config.title}:
-                  </span>
-                  <span className={`text-sm ${assignedResident ? 'text-gray-900 font-semibold' : 'text-gray-500'}`}>
-                    {assignedResident || 'Ingen valgt'}
-                  </span>
+                <div key={taskType} className={`flex items-center justify-between p-4 rounded-xl transition-all duration-200 ${assignedResident ? 'bg-green-50 border-2 border-green-200' : 'bg-gray-50 border-2 border-gray-200 border-dashed'}`}>
+                  <div className="flex items-center space-x-3">
+                    <div className="text-2xl p-2 rounded-lg bg-white shadow-sm">
+                      {config.emoji}
+                    </div>
+                    <span className="font-medium text-gray-800">
+                      {config.title}
+                    </span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    {assignedResident ? (
+                      <>
+                        <span className="text-green-600 text-lg">✓</span>
+                        <span className="font-semibold text-gray-900 bg-white px-3 py-1 rounded-full border-2 border-green-200">
+                          {assignedResident}
+                        </span>
+                      </>
+                    ) : (
+                      <span className="text-gray-500 font-medium bg-gray-100 px-3 py-1 rounded-full border-2 border-dashed border-gray-300">
+                        Ledig
+                      </span>
+                    )}
+                  </div>
                 </div>
               );
             })}
           </div>
           
           {aloneInKitchen && (
-            <div className="mt-4 p-4 bg-warning-50 rounded-lg border border-warning-200">
-              <div className="flex items-center">
-                <span className="text-warning-600 mr-2">👤</span>
-                <span className="text-sm font-medium text-warning-800">
-                  Køkken præference: {aloneInKitchen} vil være alene
-                </span>
+            <div className="mt-6 p-4 bg-gradient-to-r from-orange-50 to-amber-50 rounded-xl border-2 border-orange-200">
+              <div className="flex items-center justify-center space-x-3">
+                <div className="text-2xl p-2 rounded-full bg-orange-200">👤</div>
+                <div className="text-center">
+                  <p className="font-semibold text-orange-800">
+                    Køkken præference: Alene
+                  </p>
+                  <p className="text-sm text-orange-700">
+                    Køkkenet er reserveret til én person i dag
+                  </p>
+                </div>
               </div>
             </div>
           )}
+          
+          {/* Progress indicator */}
+          <div className="mt-6 pt-4 border-t border-gray-200">
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-gray-600">Opgaver tildelt:</span>
+              <span className="font-semibold text-gray-800">
+                {Object.values(tasks).filter(Boolean).length} af {Object.keys(tasks).length}
+              </span>
+            </div>
+            <div className="mt-2 w-full bg-gray-200 rounded-full h-2">
+              <div 
+                className="bg-gradient-to-r from-green-400 to-green-600 h-2 rounded-full transition-all duration-500"
+                style={{ width: `${(Object.values(tasks).filter(Boolean).length / Object.keys(tasks).length) * 100}%` }}
+              ></div>
+            </div>
+          </div>
         </CardContent>
       </Card>
 

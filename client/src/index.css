@@ -44,6 +44,10 @@
   --success-50: hsl(151 81% 96%);
   --success-500: hsl(160 84% 39%);
   --success-600: hsl(158 64% 52%);
+  --cooking-color: hsl(25 95% 53%);
+  --shopping-color: hsl(210 79% 46%);
+  --table-color: hsl(142 76% 36%);
+  --dishes-color: hsl(271 91% 65%);
   --font-sans: Inter, system-ui, sans-serif;
   --font-serif: Georgia, serif;
   --font-mono: Menlo, monospace;
@@ -159,4 +163,70 @@
 
 .hover\:bg-success-600:hover {
   background-color: var(--success-600);
+}
+
+.task-cooking {
+  background: linear-gradient(135deg, hsl(25 95% 53% / 0.1), hsl(25 95% 53% / 0.05));
+  border-left: 4px solid var(--cooking-color);
+}
+
+.task-shopping {
+  background: linear-gradient(135deg, hsl(210 79% 46% / 0.1), hsl(210 79% 46% / 0.05));
+  border-left: 4px solid var(--shopping-color);
+}
+
+.task-table {
+  background: linear-gradient(135deg, hsl(142 76% 36% / 0.1), hsl(142 76% 36% / 0.05));
+  border-left: 4px solid var(--table-color);
+}
+
+.task-dishes {
+  background: linear-gradient(135deg, hsl(271 91% 65% / 0.1), hsl(271 91% 65% / 0.05));
+  border-left: 4px solid var(--dishes-color);
+}
+
+.task-assigned {
+  background: linear-gradient(135deg, hsl(160 84% 39% / 0.15), hsl(160 84% 39% / 0.05));
+  border-left: 4px solid var(--success-500);
+}
+
+.pulse-gentle {
+  animation: pulse-gentle 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse-gentle {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+
+.slide-in-from-bottom {
+  animation: slide-in-from-bottom 0.5s ease-out;
+}
+
+@keyframes slide-in-from-bottom {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-in {
+  animation: fade-in 0.3s ease-out;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
