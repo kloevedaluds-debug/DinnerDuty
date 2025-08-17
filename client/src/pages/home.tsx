@@ -300,7 +300,7 @@ export default function Home() {
           <p className="text-orange-100 text-sm mt-1">Vil du være alene i køkkenet i dag?</p>
         </div>
         
-        <CardContent className="p-8">
+        <CardContent className="p-6">
           <div className={`rounded-xl p-6 transition-all duration-300 ${aloneInKitchen ? 'bg-gradient-to-br from-green-50 to-emerald-50 border-2 border-green-200' : 'bg-gradient-to-br from-gray-50 to-slate-50 border-2 border-gray-200'}`}>
             <div className="text-center">
               <div className="mb-6">
@@ -320,8 +320,7 @@ export default function Home() {
               
               <Button
                 onClick={handleToggleAloneChoice}
-                size="lg"
-                className={`px-8 py-4 rounded-xl font-semibold text-lg transition-all duration-300 transform hover:scale-105 ${
+                className={`w-full max-w-xs mx-auto px-4 py-3 rounded-xl font-semibold transition-all duration-300 hover:scale-105 ${
                   aloneInKitchen 
                     ? 'bg-green-500 hover:bg-green-600 text-white shadow-lg' 
                     : 'bg-primary-500 hover:bg-primary-600 text-white shadow-lg'
