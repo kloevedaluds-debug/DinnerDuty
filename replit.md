@@ -13,6 +13,9 @@ Preferred communication style: Simple, everyday language.
 - Weekly overview functionality is essential for planning
 - Dish selection feature requested for residents to specify what they're cooking
 - "Dagens ret" (Dish of the Day) section should appear at the very top of the page
+- Shopping list should be accessible before shopper assignment (cook can prepare in advance)
+- Clear notice required: residents not taking other tasks must participate in dishwashing unless agreed with staff
+- User successfully deployed app to Render hosting platform (August 18, 2025)
 
 # System Architecture
 
