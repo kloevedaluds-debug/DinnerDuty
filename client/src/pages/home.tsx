@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
@@ -39,6 +39,7 @@ function formatDanishDate(dateStr: string): string {
 export default function Home() {
   const [currentDate] = useState(getCurrentDate());
   const [newResidentInputs, setNewResidentInputs] = useState<Record<string, string>>({});
+  const [localDishValue, setLocalDishValue] = useState<string>('');
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -168,10 +169,27 @@ export default function Home() {
     }
   };
 
-  const handleDishOfTheDayChange = (dish: string) => {
-    const trimmedDish = dish.trim();
-    setDishOfTheDayMutation.mutate(trimmedDish || null);
-  };
+  // Sync local dish value with server data
+  useEffect(() => {
+    if (assignment?.dishOfTheDay !== undefined) {
+      setLocalDishValue(assignment.dishOfTheDay || '');
+    }
+  }, [assignment?.dishOfTheDay]);
+
+  // Debounce dish updates
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const trimmedDish = localDishValue.trim();
+      const currentDish = assignment?.dishOfTheDay || '';
+      
+      // Only update if value has actually changed
+      if (trimmedDish !== currentDish) {
+        setDishOfTheDayMutation.mutate(trimmedDish || null);
+      }
+    }, 500); // 500ms delay
+
+    return () => clearTimeout(timer);
+  }, [localDishValue, assignment?.dishOfTheDay, setDishOfTheDayMutation]);
 
   const updateResidentInput = (key: string, value: string) => {
     setNewResidentInputs(prev => ({
@@ -266,16 +284,16 @@ export default function Home() {
               
               <Input
                 placeholder="F.eks. Spaghetti Bolognese, Fiskefilet med kartofler..."
-                value={dishOfTheDay || ''}
-                onChange={(e) => handleDishOfTheDayChange(e.target.value)}
+                value={localDishValue}
+                onChange={(e) => setLocalDishValue(e.target.value)}
                 className="w-full max-w-md mx-auto text-center text-lg px-4 py-3 rounded-xl border-2 border-purple-200 focus:border-purple-400 focus:ring-purple-300"
                 disabled={setDishOfTheDayMutation.isPending}
               />
               
-              {dishOfTheDay && (
+              {localDishValue && (
                 <div className="mt-4 p-3 bg-white rounded-xl border-2 border-purple-200">
                   <p className="text-purple-700 font-medium">
-                    🎉 I laver: <span className="text-purple-900 font-semibold">{dishOfTheDay}</span>
+                    🎉 I laver: <span className="text-purple-900 font-semibold">{localDishValue}</span>
                   </p>
                 </div>
               )}
