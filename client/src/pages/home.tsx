@@ -18,6 +18,7 @@ interface TaskAssignment {
   tasks: Tasks;
   aloneInKitchen: string | null;
   dishOfTheDay: string | null;
+  shoppingList: string[] | null;
 }
 
 const TASK_CONFIG = {
@@ -40,6 +41,7 @@ export default function Home() {
   const [currentDate] = useState(getCurrentDate());
   const [newResidentInputs, setNewResidentInputs] = useState<Record<string, string>>({});
   const [localDishValue, setLocalDishValue] = useState<string>('');
+  const [newShoppingItem, setNewShoppingItem] = useState<string>('');
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -179,6 +181,56 @@ export default function Home() {
 
     return () => clearTimeout(timer);
   }, [localDishValue, assignment?.dishOfTheDay, setDishOfTheDayMutation, newResidentInputs, assignment?.tasks?.kok, assignTaskMutation]);
+
+  // Shopping list mutations
+  const addShoppingItemMutation = useMutation({
+    mutationFn: async (item: string) => {
+      const response = await apiRequest('POST', '/api/shopping-list/add', {
+        date: currentDate,
+        item,
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/tasks'] });
+      setNewShoppingItem('');
+      toast({
+        title: "Vare tilføjet",
+        description: "Varen er blevet tilføjet til indkøbslisten.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Fejl",
+        description: "Der opstod en fejl ved tilføjelse af varen.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const removeShoppingItemMutation = useMutation({
+    mutationFn: async (index: number) => {
+      const response = await apiRequest('POST', '/api/shopping-list/remove', {
+        date: currentDate,
+        index,
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/tasks'] });
+      toast({
+        title: "Vare fjernet",
+        description: "Varen er blevet fjernet fra indkøbslisten.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Fejl",
+        description: "Der opstod en fejl ved fjernelse af varen.",
+        variant: "destructive",
+      });
+    },
+  });
 
   const handleAssignTask = (taskType: TaskType, resident: string) => {
     if (resident.trim()) {
@@ -425,6 +477,65 @@ export default function Home() {
                       </Button>
                     )}
                   </div>
+                  
+                  {/* Shopping List for Indkøb Task */}
+                  {taskType === 'indkoeb' && tasks.indkoeb && (
+                    <div className="mt-4 p-4 bg-blue-50 rounded-xl border border-blue-200">
+                      <div className="flex items-center justify-between mb-3">
+                        <h4 className="font-semibold text-blue-800">📝 Indkøbsliste</h4>
+                        <span className="text-xs text-blue-600">Kokken: {tasks.kok || 'Ikke valgt'}</span>
+                      </div>
+                      
+                      <div className="space-y-2 mb-3">
+                        {assignment?.shoppingList && assignment.shoppingList.length > 0 ? (
+                          assignment.shoppingList.map((item: string, index: number) => (
+                            <div key={index} className="flex items-center justify-between bg-white p-2 rounded-lg">
+                              <span className="text-sm text-gray-700">• {item}</span>
+                              <Button
+                                onClick={() => removeShoppingItemMutation.mutate(index)}
+                                variant="ghost"
+                                size="sm"
+                                className="h-6 w-6 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+                                disabled={removeShoppingItemMutation.isPending}
+                              >
+                                <Minus className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          ))
+                        ) : (
+                          <p className="text-xs text-blue-600 italic">Ingen varer på listen endnu</p>
+                        )}
+                      </div>
+                      
+                      <div className="flex gap-2">
+                        <Input
+                          type="text"
+                          placeholder="Tilføj vare til indkøbslisten..."
+                          className="flex-1 text-sm"
+                          value={newShoppingItem}
+                          onChange={(e) => setNewShoppingItem(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' && newShoppingItem.trim()) {
+                              addShoppingItemMutation.mutate(newShoppingItem.trim());
+                            }
+                          }}
+                          disabled={addShoppingItemMutation.isPending}
+                        />
+                        <Button
+                          onClick={() => newShoppingItem.trim() && addShoppingItemMutation.mutate(newShoppingItem.trim())}
+                          size="sm"
+                          className="px-3 py-1 bg-blue-500 hover:bg-blue-600 text-white"
+                          disabled={addShoppingItemMutation.isPending || !newShoppingItem.trim()}
+                        >
+                          <Plus className="h-3 w-3" />
+                        </Button>
+                      </div>
+                      
+                      <p className="text-xs text-blue-600 mt-2">
+                        💡 Tip: Kokken kan tilføje varer, som indkøberen skal handle
+                      </p>
+                    </div>
+                  )}
                 </div>
               );
             })}

@@ -9,6 +9,10 @@ export interface IStorage {
   setAloneInKitchen(date: string, resident: string | null): Promise<TaskAssignment>;
   setDishOfTheDay(date: string, dish: string | null): Promise<TaskAssignment>;
   resetTasks(date: string): Promise<TaskAssignment>;
+  // Shopping list management
+  addShoppingItem(date: string, item: string): Promise<TaskAssignment>;
+  removeShoppingItem(date: string, index: number): Promise<TaskAssignment>;
+  updateShoppingList(date: string, items: string[]): Promise<TaskAssignment>;
 }
 
 export class MemStorage implements IStorage {
@@ -37,6 +41,7 @@ export class MemStorage implements IStorage {
           tasks: { kok: null, indkoeb: null, bord: null, opvask: null },
           aloneInKitchen: null,
           dishOfTheDay: null,
+          shoppingList: [],
         });
       }
     }
@@ -60,6 +65,7 @@ export class MemStorage implements IStorage {
         ...assignment,
         aloneInKitchen: assignment.aloneInKitchen ?? null,
         dishOfTheDay: assignment.dishOfTheDay ?? null,
+        shoppingList: assignment.shoppingList ?? [],
       };
       this.taskAssignments.set(assignment.date, newAssignment);
       return newAssignment;
@@ -75,6 +81,7 @@ export class MemStorage implements IStorage {
         tasks: { kok: null, indkoeb: null, bord: null, opvask: null },
         aloneInKitchen: null,
         dishOfTheDay: null,
+        shoppingList: [],
       });
     }
 
@@ -86,6 +93,7 @@ export class MemStorage implements IStorage {
       tasks: updatedTasks,
       aloneInKitchen: existing.aloneInKitchen,
       dishOfTheDay: existing.dishOfTheDay,
+      shoppingList: existing.shoppingList ?? [],
     });
   }
 
@@ -98,6 +106,7 @@ export class MemStorage implements IStorage {
         tasks: { kok: null, indkoeb: null, bord: null, opvask: null },
         aloneInKitchen: null,
         dishOfTheDay: null,
+        shoppingList: [],
       });
     }
 
@@ -106,6 +115,7 @@ export class MemStorage implements IStorage {
       tasks: existing.tasks as Tasks,
       aloneInKitchen: resident,
       dishOfTheDay: existing.dishOfTheDay,
+      shoppingList: existing.shoppingList ?? [],
     });
   }
 
@@ -118,6 +128,7 @@ export class MemStorage implements IStorage {
         tasks: { kok: null, indkoeb: null, bord: null, opvask: null },
         aloneInKitchen: null,
         dishOfTheDay: null,
+        shoppingList: [],
       });
     }
 
@@ -126,6 +137,7 @@ export class MemStorage implements IStorage {
       tasks: existing.tasks as Tasks,
       aloneInKitchen: existing.aloneInKitchen,
       dishOfTheDay: dish,
+      shoppingList: existing.shoppingList ?? [],
     });
   }
 
@@ -135,6 +147,79 @@ export class MemStorage implements IStorage {
       tasks: { kok: null, indkoeb: null, bord: null, opvask: null },
       aloneInKitchen: null,
       dishOfTheDay: null,
+      shoppingList: [],
+    });
+  }
+
+  async addShoppingItem(date: string, item: string): Promise<TaskAssignment> {
+    let existing = await this.getTaskAssignmentByDate(date);
+    
+    if (!existing) {
+      existing = await this.createOrUpdateTaskAssignment({
+        date,
+        tasks: { kok: null, indkoeb: null, bord: null, opvask: null },
+        aloneInKitchen: null,
+        dishOfTheDay: null,
+        shoppingList: [],
+      });
+    }
+
+    const currentList = Array.isArray(existing.shoppingList) ? existing.shoppingList : [];
+    const updatedList = [...currentList, item.trim()];
+
+    return this.createOrUpdateTaskAssignment({
+      date,
+      tasks: existing.tasks as Tasks,
+      aloneInKitchen: existing.aloneInKitchen,
+      dishOfTheDay: existing.dishOfTheDay,
+      shoppingList: updatedList,
+    });
+  }
+
+  async removeShoppingItem(date: string, index: number): Promise<TaskAssignment> {
+    let existing = await this.getTaskAssignmentByDate(date);
+    
+    if (!existing) {
+      existing = await this.createOrUpdateTaskAssignment({
+        date,
+        tasks: { kok: null, indkoeb: null, bord: null, opvask: null },
+        aloneInKitchen: null,
+        dishOfTheDay: null,
+        shoppingList: [],
+      });
+    }
+
+    const currentList = Array.isArray(existing.shoppingList) ? existing.shoppingList : [];
+    const updatedList = currentList.filter((_, i) => i !== index);
+
+    return this.createOrUpdateTaskAssignment({
+      date,
+      tasks: existing.tasks as Tasks,
+      aloneInKitchen: existing.aloneInKitchen,
+      dishOfTheDay: existing.dishOfTheDay,
+      shoppingList: updatedList,
+    });
+  }
+
+  async updateShoppingList(date: string, items: string[]): Promise<TaskAssignment> {
+    let existing = await this.getTaskAssignmentByDate(date);
+    
+    if (!existing) {
+      existing = await this.createOrUpdateTaskAssignment({
+        date,
+        tasks: { kok: null, indkoeb: null, bord: null, opvask: null },
+        aloneInKitchen: null,
+        dishOfTheDay: null,
+        shoppingList: [],
+      });
+    }
+
+    return this.createOrUpdateTaskAssignment({
+      date,
+      tasks: existing.tasks as Tasks,
+      aloneInKitchen: existing.aloneInKitchen,
+      dishOfTheDay: existing.dishOfTheDay,
+      shoppingList: items.filter(item => item.trim().length > 0),
     });
   }
 }

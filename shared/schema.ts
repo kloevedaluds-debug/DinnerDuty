@@ -9,6 +9,7 @@ export const taskAssignments = pgTable("task_assignments", {
   tasks: jsonb("tasks").notNull(), // {kok: string|null, indkoeb: string|null, bord: string|null, opvask: string|null}
   aloneInKitchen: text("alone_in_kitchen"), // resident name or null
   dishOfTheDay: text("dish_of_the_day"), // the planned dish/meal for the day
+  shoppingList: jsonb("shopping_list").default('[]'), // array of shopping items for the cook
 });
 
 export const insertTaskAssignmentSchema = createInsertSchema(taskAssignments).omit({
