@@ -539,12 +539,64 @@ export default function Home() {
                       </p>
                     </div>
                   )}
+                  
+                  {/* Special reminder for dishwashing task */}
+                  {taskType === 'vaskeop' && (
+                    <div className="mt-4 p-4 bg-red-50 rounded-xl border border-red-200">
+                      <div className="flex items-start space-x-3">
+                        <div className="text-red-500 text-lg">⚠️</div>
+                        <div>
+                          <p className="text-sm text-red-800 font-medium mb-1">Obligatorisk for alle</p>
+                          <p className="text-xs text-red-700">
+                            Alle beboere der ikke melder sig til andre opgaver skal deltage i opvask, 
+                            medmindre andet er aftalt med personalet.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               );
             })}
           </CardContent>
         </Card>
       </div>
+
+      {/* Important Notice Section */}
+      <Card className="rounded-2xl shadow-sm border border-orange-200 overflow-hidden mb-6 bg-gradient-to-r from-orange-50 to-amber-50">
+        <div className="bg-gradient-to-r from-orange-400 to-amber-500 px-6 py-4">
+          <h2 className="text-xl font-semibold text-white flex items-center">
+            <div className="mr-3 text-2xl p-2 rounded-full bg-white/20 backdrop-blur-sm">⚠️</div>
+            Vigtigt at vide
+          </h2>
+          <p className="text-orange-100 text-sm mt-1">Regler for opgavefordeling</p>
+        </div>
+        
+        <CardContent className="p-6">
+          <div className="bg-white rounded-xl p-6 border-2 border-orange-200">
+            <div className="flex items-start space-x-4">
+              <div className="text-orange-500 text-3xl">🍽️</div>
+              <div className="flex-1">
+                <h3 className="font-semibold text-gray-900 text-lg mb-3">Vaske op - obligatorisk deltagelse</h3>
+                <div className="space-y-2 text-gray-700">
+                  <p className="text-sm leading-relaxed">
+                    <strong>Alle beboere</strong> der ikke melder sig til en af de andre opgaver 
+                    (Kok, Indkøb, eller Dække bord) <strong>skal deltage i "Vaske op"</strong>.
+                  </p>
+                  <p className="text-sm leading-relaxed">
+                    Dette gælder medmindre andet er <em>specifikt aftalt med personalet</em>.
+                  </p>
+                  <div className="mt-4 p-3 bg-orange-50 rounded-lg border border-orange-200">
+                    <p className="text-xs text-orange-800 font-medium">
+                      💡 Husk: Hvis du ikke tager en anden opgave, skal du hjælpe med opvask
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Kitchen Preference Section */}
       <Card className="rounded-2xl shadow-sm border border-gray-200 overflow-hidden mb-8">
