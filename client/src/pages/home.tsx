@@ -479,11 +479,14 @@ export default function Home() {
                   </div>
                   
                   {/* Shopping List for Indkøb Task */}
-                  {taskType === 'indkoeb' && tasks.indkoeb && (
+                  {taskType === 'indkoeb' && (
                     <div className="mt-4 p-4 bg-blue-50 rounded-xl border border-blue-200">
                       <div className="flex items-center justify-between mb-3">
                         <h4 className="font-semibold text-blue-800">📝 Indkøbsliste</h4>
-                        <span className="text-xs text-blue-600">Kokken: {tasks.kok || 'Ikke valgt'}</span>
+                        <div className="text-xs text-blue-600">
+                          <div>Indkøber: {tasks.indkoeb || 'Ikke valgt endnu'}</div>
+                          <div>Kokken: {tasks.kok || 'Ikke valgt endnu'}</div>
+                        </div>
                       </div>
                       
                       <div className="space-y-2 mb-3">
@@ -532,7 +535,7 @@ export default function Home() {
                       </div>
                       
                       <p className="text-xs text-blue-600 mt-2">
-                        💡 Tip: Kokken kan tilføje varer, som indkøberen skal handle
+                        💡 Tip: {tasks.kok ? 'Kokken' : 'Alle'} kan tilføje varer til listen, før indkøberen bliver valgt
                       </p>
                     </div>
                   )}
