@@ -11,6 +11,8 @@ Preferred communication style: Simple, everyday language.
 - Kitchen preference should be a simple Yes/No toggle instead of name input
 - All changes should be saved automatically (no manual save button needed)
 - Weekly overview functionality is essential for planning
+- Dish selection feature requested for residents to specify what they're cooking
+- "Dagens ret" (Dish of the Day) section should appear at the very top of the page
 
 # System Architecture
 
