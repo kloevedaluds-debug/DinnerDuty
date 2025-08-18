@@ -144,6 +144,42 @@ export default function Home() {
     },
   });
 
+  // Sync local dish value with server data  
+  useEffect(() => {
+    if (assignment?.dishOfTheDay !== undefined) {
+      setLocalDishValue(assignment.dishOfTheDay || '');
+    }
+    
+    // If there's a cook assigned and no name in the dish-cook input, populate it
+    if (assignment?.tasks?.kok && !newResidentInputs['dish-cook']) {
+      setNewResidentInputs(prev => ({
+        ...prev,
+        'dish-cook': assignment.tasks.kok
+      }));
+    }
+  }, [assignment?.dishOfTheDay, assignment?.tasks?.kok, newResidentInputs]);
+
+  // Debounce dish updates and auto-assign cook
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const trimmedDish = localDishValue.trim();
+      const currentDish = assignment?.dishOfTheDay || '';
+      const cookName = newResidentInputs['dish-cook']?.trim();
+      
+      // Only update if value has actually changed
+      if (trimmedDish !== currentDish) {
+        setDishOfTheDayMutation.mutate(trimmedDish || null);
+      }
+      
+      // Auto-assign cook if both dish and cook name are provided
+      if (cookName && trimmedDish && cookName !== assignment?.tasks?.kok) {
+        assignTaskMutation.mutate({ taskType: 'kok', resident: cookName });
+      }
+    }, 500); // 500ms delay
+
+    return () => clearTimeout(timer);
+  }, [localDishValue, assignment?.dishOfTheDay, setDishOfTheDayMutation, newResidentInputs, assignment?.tasks?.kok, assignTaskMutation]);
+
   const handleAssignTask = (taskType: TaskType, resident: string) => {
     if (resident.trim()) {
       assignTaskMutation.mutate({ taskType, resident: resident.trim() });
@@ -168,28 +204,6 @@ export default function Home() {
       setKitchenPreferenceMutation.mutate("Ja");
     }
   };
-
-  // Sync local dish value with server data
-  useEffect(() => {
-    if (assignment?.dishOfTheDay !== undefined) {
-      setLocalDishValue(assignment.dishOfTheDay || '');
-    }
-  }, [assignment?.dishOfTheDay]);
-
-  // Debounce dish updates
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      const trimmedDish = localDishValue.trim();
-      const currentDish = assignment?.dishOfTheDay || '';
-      
-      // Only update if value has actually changed
-      if (trimmedDish !== currentDish) {
-        setDishOfTheDayMutation.mutate(trimmedDish || null);
-      }
-    }, 500); // 500ms delay
-
-    return () => clearTimeout(timer);
-  }, [localDishValue, assignment?.dishOfTheDay, setDishOfTheDayMutation]);
 
   const updateResidentInput = (key: string, value: string) => {
     setNewResidentInputs(prev => ({
@@ -275,26 +289,47 @@ export default function Home() {
                   🍽️
                 </div>
                 <h3 className="font-semibold text-gray-900 text-xl mb-2">
-                  Dagens ret
+                  Dagens ret & Kok
                 </h3>
                 <p className="text-sm text-gray-600">
-                  Skriv hvad I laver til aftensmad i dag
+                  Skriv dit navn og hvad I laver til aftensmad i dag
                 </p>
               </div>
               
-              <Input
-                placeholder="F.eks. Spaghetti Bolognese, Fiskefilet med kartofler..."
-                value={localDishValue}
-                onChange={(e) => setLocalDishValue(e.target.value)}
-                className="w-full max-w-md mx-auto text-center text-lg px-4 py-3 rounded-xl border-2 border-purple-200 focus:border-purple-400 focus:ring-purple-300"
-                disabled={setDishOfTheDayMutation.isPending}
-              />
+              <div className="space-y-4">
+                <div>
+                  <Input
+                    placeholder="Dit navn (bliver automatisk kokken)"
+                    value={newResidentInputs['dish-cook'] || ''}
+                    onChange={(e) => updateResidentInput('dish-cook', e.target.value)}
+                    className="w-full max-w-md mx-auto text-center text-lg px-4 py-3 rounded-xl border-2 border-green-200 focus:border-green-400 focus:ring-green-300"
+                    disabled={setDishOfTheDayMutation.isPending}
+                  />
+                </div>
+                
+                <div>
+                  <Input
+                    placeholder="F.eks. Spaghetti Bolognese, Fiskefilet med kartofler..."
+                    value={localDishValue}
+                    onChange={(e) => setLocalDishValue(e.target.value)}
+                    className="w-full max-w-md mx-auto text-center text-lg px-4 py-3 rounded-xl border-2 border-purple-200 focus:border-purple-400 focus:ring-purple-300"
+                    disabled={setDishOfTheDayMutation.isPending}
+                  />
+                </div>
+              </div>
               
-              {localDishValue && (
+              {(localDishValue || newResidentInputs['dish-cook']) && (
                 <div className="mt-4 p-3 bg-white rounded-xl border-2 border-purple-200">
-                  <p className="text-purple-700 font-medium">
-                    🎉 I laver: <span className="text-purple-900 font-semibold">{localDishValue}</span>
-                  </p>
+                  {newResidentInputs['dish-cook'] && (
+                    <p className="text-green-700 font-medium mb-2">
+                      👨‍🍳 Kok: <span className="text-green-900 font-semibold">{newResidentInputs['dish-cook']}</span>
+                    </p>
+                  )}
+                  {localDishValue && (
+                    <p className="text-purple-700 font-medium">
+                      🍽️ Ret: <span className="text-purple-900 font-semibold">{localDishValue}</span>
+                    </p>
+                  )}
                 </div>
               )}
             </div>
@@ -304,9 +339,10 @@ export default function Home() {
             <div className="flex items-start space-x-3">
               <div className="text-amber-500 text-lg">💡</div>
               <div>
-                <p className="text-sm text-amber-800 font-medium mb-1">Tip til dagens ret</p>
+                <p className="text-sm text-amber-800 font-medium mb-1">Sådan virker det</p>
                 <p className="text-xs text-amber-700">
-                  Skriv hvilken ret I laver, så alle kan se hvad der skal tilberedes og eventuelt hjælpe med forberedelser.
+                  Skriv dit navn i første felt - du bliver automatisk tildelt kokke-opgaven. 
+                  Derefter kan du skrive hvilken ret I laver til aftensmad.
                 </p>
               </div>
             </div>
