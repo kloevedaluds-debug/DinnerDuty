@@ -7,6 +7,7 @@ export interface IStorage {
   createOrUpdateTaskAssignment(assignment: InsertTaskAssignment): Promise<TaskAssignment>;
   assignTask(date: string, taskType: string, resident: string | null): Promise<TaskAssignment>;
   setAloneInKitchen(date: string, resident: string | null): Promise<TaskAssignment>;
+  setDishOfTheDay(date: string, dish: string | null): Promise<TaskAssignment>;
   resetTasks(date: string): Promise<TaskAssignment>;
 }
 
@@ -35,6 +36,7 @@ export class MemStorage implements IStorage {
           date,
           tasks: { kok: null, indkoeb: null, bord: null, opvask: null },
           aloneInKitchen: null,
+          dishOfTheDay: null,
         });
       }
     }
@@ -57,6 +59,7 @@ export class MemStorage implements IStorage {
         id: randomUUID(),
         ...assignment,
         aloneInKitchen: assignment.aloneInKitchen ?? null,
+        dishOfTheDay: assignment.dishOfTheDay ?? null,
       };
       this.taskAssignments.set(assignment.date, newAssignment);
       return newAssignment;
@@ -71,6 +74,7 @@ export class MemStorage implements IStorage {
         date,
         tasks: { kok: null, indkoeb: null, bord: null, opvask: null },
         aloneInKitchen: null,
+        dishOfTheDay: null,
       });
     }
 
@@ -81,6 +85,7 @@ export class MemStorage implements IStorage {
       date,
       tasks: updatedTasks,
       aloneInKitchen: existing.aloneInKitchen,
+      dishOfTheDay: existing.dishOfTheDay,
     });
   }
 
@@ -92,6 +97,7 @@ export class MemStorage implements IStorage {
         date,
         tasks: { kok: null, indkoeb: null, bord: null, opvask: null },
         aloneInKitchen: null,
+        dishOfTheDay: null,
       });
     }
 
@@ -99,6 +105,27 @@ export class MemStorage implements IStorage {
       date,
       tasks: existing.tasks as Tasks,
       aloneInKitchen: resident,
+      dishOfTheDay: existing.dishOfTheDay,
+    });
+  }
+
+  async setDishOfTheDay(date: string, dish: string | null): Promise<TaskAssignment> {
+    let existing = await this.getTaskAssignmentByDate(date);
+    
+    if (!existing) {
+      existing = await this.createOrUpdateTaskAssignment({
+        date,
+        tasks: { kok: null, indkoeb: null, bord: null, opvask: null },
+        aloneInKitchen: null,
+        dishOfTheDay: null,
+      });
+    }
+
+    return this.createOrUpdateTaskAssignment({
+      date,
+      tasks: existing.tasks as Tasks,
+      aloneInKitchen: existing.aloneInKitchen,
+      dishOfTheDay: dish,
     });
   }
 
@@ -107,6 +134,7 @@ export class MemStorage implements IStorage {
       date,
       tasks: { kok: null, indkoeb: null, bord: null, opvask: null },
       aloneInKitchen: null,
+      dishOfTheDay: null,
     });
   }
 }

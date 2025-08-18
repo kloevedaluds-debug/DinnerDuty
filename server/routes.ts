@@ -22,6 +22,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           date,
           tasks: { kok: null, indkoeb: null, bord: null, opvask: null },
           aloneInKitchen: null,
+          dishOfTheDay: null,
         });
       } else {
         res.json(assignment);
@@ -70,6 +71,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
         res.status(400).json({ message: "Invalid request data", errors: error.errors });
       } else {
         res.status(500).json({ message: "Failed to set kitchen preference" });
+      }
+    }
+  });
+
+  // Set dish of the day
+  app.post("/api/tasks/dish-of-the-day", async (req, res) => {
+    try {
+      const schema = z.object({
+        date: z.string().optional(),
+        dish: z.string().nullable(),
+      });
+
+      const { date = getCurrentDate(), dish } = schema.parse(req.body);
+      const assignment = await storage.setDishOfTheDay(date, dish);
+      
+      res.json(assignment);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ message: "Invalid request data", errors: error.errors });
+      } else {
+        res.status(500).json({ message: "Failed to set dish of the day" });
       }
     }
   });

@@ -19,6 +19,7 @@ interface TaskAssignment {
   date: string;
   tasks: Tasks;
   aloneInKitchen: string | null;
+  dishOfTheDay: string | null;
 }
 
 interface WeekData {
@@ -255,6 +256,7 @@ export default function WeekView() {
           const assignment = assignments.find(a => a.date === date);
           const tasks = assignment?.tasks || { kok: null, indkoeb: null, bord: null, opvask: null };
           const aloneInKitchen = assignment?.aloneInKitchen;
+          const dishOfTheDay = assignment?.dishOfTheDay;
           const isToday = date === new Date().toISOString().split('T')[0];
 
           const tasksAssigned = Object.values(tasks).filter(Boolean).length;
@@ -339,6 +341,30 @@ export default function WeekView() {
                     </div>
                   );
                 })}
+
+                {/* Dish of the Day */}
+                <div className="rounded-lg p-3 bg-gradient-to-br from-purple-50 to-violet-50 border-2 border-purple-200">
+                  <div className="text-center space-y-2">
+                    <div className="flex items-center justify-center space-x-2">
+                      <div className="text-lg p-1 rounded-full bg-purple-200">
+                        🍽️
+                      </div>
+                      <span className="text-xs font-semibold text-gray-800">
+                        Dagens ret
+                      </span>
+                    </div>
+                    
+                    {dishOfTheDay ? (
+                      <div className="text-xs bg-purple-500 text-white px-3 py-1 rounded-full font-semibold text-center break-words">
+                        {dishOfTheDay}
+                      </div>
+                    ) : (
+                      <div className="text-xs text-gray-500 px-3 py-1 rounded-full bg-gray-100 border-2 border-dashed border-gray-300">
+                        Ikke valgt
+                      </div>
+                    )}
+                  </div>
+                </div>
 
                 {/* Kitchen Preference */}
                 <div className={`rounded-lg p-3 transition-all duration-300 ${aloneInKitchen ? 'bg-gradient-to-br from-orange-50 to-amber-50 border-2 border-orange-200' : 'bg-gradient-to-br from-gray-50 to-slate-50 border-2 border-gray-200'}`}>

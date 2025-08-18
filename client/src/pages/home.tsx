@@ -17,6 +17,7 @@ interface TaskAssignment {
   date: string;
   tasks: Tasks;
   aloneInKitchen: string | null;
+  dishOfTheDay: string | null;
 }
 
 const TASK_CONFIG = {
@@ -95,6 +96,30 @@ export default function Home() {
     },
   });
 
+  const setDishOfTheDayMutation = useMutation({
+    mutationFn: async (dish: string | null) => {
+      const response = await apiRequest('POST', '/api/tasks/dish-of-the-day', {
+        date: currentDate,
+        dish,
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/tasks'] });
+      toast({
+        title: "Dagens ret opdateret",
+        description: "Dagens ret er blevet gemt.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Fejl",
+        description: "Der opstod en fejl ved opdatering af dagens ret.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const resetTasksMutation = useMutation({
     mutationFn: async () => {
       const response = await apiRequest('POST', '/api/tasks/reset', {
@@ -143,6 +168,11 @@ export default function Home() {
     }
   };
 
+  const handleDishOfTheDayChange = (dish: string) => {
+    const trimmedDish = dish.trim();
+    setDishOfTheDayMutation.mutate(trimmedDish || null);
+  };
+
   const updateResidentInput = (key: string, value: string) => {
     setNewResidentInputs(prev => ({
       ...prev,
@@ -169,6 +199,7 @@ export default function Home() {
 
   const tasks = assignment?.tasks || { kok: null, indkoeb: null, bord: null, opvask: null };
   const aloneInKitchen = assignment?.aloneInKitchen;
+  const dishOfTheDay = assignment?.dishOfTheDay;
 
   return (
     <div className="container mx-auto px-4 py-6 max-w-2xl slide-in-from-bottom">
@@ -346,6 +377,63 @@ export default function Home() {
         </CardContent>
       </Card>
 
+      {/* Dish of the Day Section */}
+      <Card className="rounded-2xl shadow-sm border border-gray-200 overflow-hidden mb-8">
+        <div className="bg-gradient-to-r from-purple-500 to-violet-600 px-6 py-4">
+          <h2 className="text-xl font-semibold text-white flex items-center">
+            <div className="mr-3 text-2xl p-2 rounded-full bg-white/20 backdrop-blur-sm">🍽️</div>
+            Dagens ret
+          </h2>
+          <p className="text-purple-100 text-sm mt-1">Hvad laver I i dag?</p>
+        </div>
+        
+        <CardContent className="p-6">
+          <div className="rounded-xl p-6 bg-gradient-to-br from-purple-50 to-violet-50 border-2 border-purple-200">
+            <div className="text-center">
+              <div className="mb-6">
+                <div className="mx-auto w-16 h-16 rounded-full flex items-center justify-center text-2xl mb-3 bg-purple-500 text-white">
+                  🍽️
+                </div>
+                <h3 className="font-semibold text-gray-900 text-xl mb-2">
+                  Dagens ret
+                </h3>
+                <p className="text-sm text-gray-600">
+                  Skriv hvad I laver til aftensmad i dag
+                </p>
+              </div>
+              
+              <Input
+                placeholder="F.eks. Spaghetti Bolognese, Fiskefilet med kartofler..."
+                value={dishOfTheDay || ''}
+                onChange={(e) => handleDishOfTheDayChange(e.target.value)}
+                className="w-full max-w-md mx-auto text-center text-lg px-4 py-3 rounded-xl border-2 border-purple-200 focus:border-purple-400 focus:ring-purple-300"
+                disabled={setDishOfTheDayMutation.isPending}
+              />
+              
+              {dishOfTheDay && (
+                <div className="mt-4 p-3 bg-white rounded-xl border-2 border-purple-200">
+                  <p className="text-purple-700 font-medium">
+                    🎉 I laver: <span className="text-purple-900 font-semibold">{dishOfTheDay}</span>
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+          
+          <div className="mt-6 p-4 bg-amber-50 rounded-xl border border-amber-200">
+            <div className="flex items-start space-x-3">
+              <div className="text-amber-500 text-lg">💡</div>
+              <div>
+                <p className="text-sm text-amber-800 font-medium mb-1">Tip til dagens ret</p>
+                <p className="text-xs text-amber-700">
+                  Skriv hvilken ret I laver, så alle kan se hvad der skal tilberedes og eventuelt hjælpe med forberedelser.
+                </p>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Summary Section */}
       <Card className="rounded-2xl shadow-sm border border-gray-200 overflow-hidden mb-8">
         <div className="bg-gradient-to-r from-slate-600 to-slate-800 px-6 py-4">
@@ -400,6 +488,23 @@ export default function Home() {
                   </p>
                   <p className="text-sm text-orange-700">
                     Køkkenet er reserveret til én person i dag
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Dish of the Day in Summary */}
+          {dishOfTheDay && (
+            <div className="mt-6 p-4 bg-gradient-to-r from-purple-50 to-violet-50 rounded-xl border-2 border-purple-200">
+              <div className="flex items-center justify-center space-x-3">
+                <div className="text-2xl p-2 rounded-full bg-purple-200">🍽️</div>
+                <div className="text-center">
+                  <p className="font-semibold text-purple-800">
+                    Dagens ret: {dishOfTheDay}
+                  </p>
+                  <p className="text-sm text-purple-700">
+                    Det laver I til aftensmad i dag
                   </p>
                 </div>
               </div>

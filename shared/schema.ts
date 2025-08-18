@@ -8,6 +8,7 @@ export const taskAssignments = pgTable("task_assignments", {
   date: text("date").notNull(), // YYYY-MM-DD format
   tasks: jsonb("tasks").notNull(), // {kok: string|null, indkoeb: string|null, bord: string|null, opvask: string|null}
   aloneInKitchen: text("alone_in_kitchen"), // resident name or null
+  dishOfTheDay: text("dish_of_the_day"), // the planned dish/meal for the day
 });
 
 export const insertTaskAssignmentSchema = createInsertSchema(taskAssignments).omit({
