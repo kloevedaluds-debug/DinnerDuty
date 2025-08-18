@@ -546,9 +546,9 @@ export default function Home() {
                       <div className="flex items-start space-x-3">
                         <div className="text-red-500 text-lg">⚠️</div>
                         <div>
-                          <p className="text-sm text-red-800 font-medium mb-1">Obligatorisk for alle</p>
+                          <p className="text-sm text-red-800 font-medium mb-1">Obligatorisk for alle der spiser med</p>
                           <p className="text-xs text-red-700">
-                            Alle beboere der ikke melder sig til andre opgaver skal deltage i opvask, 
+                            Alle beboere der spiser med til aftensmad og ikke melder sig til andre opgaver skal deltage i opvask, 
                             medmindre andet er aftalt med personalet.
                           </p>
                         </div>
@@ -580,7 +580,7 @@ export default function Home() {
                 <h3 className="font-semibold text-gray-900 text-lg mb-3">Vaske op - obligatorisk deltagelse</h3>
                 <div className="space-y-2 text-gray-700">
                   <p className="text-sm leading-relaxed">
-                    <strong>Alle beboere</strong> der ikke melder sig til en af de andre opgaver 
+                    <strong>Alle beboere der spiser med til aftensmad</strong> og ikke melder sig til en af de andre opgaver 
                     (Kok, Indkøb, eller Dække bord) <strong>skal deltage i "Vaske op"</strong>.
                   </p>
                   <p className="text-sm leading-relaxed">
@@ -588,7 +588,7 @@ export default function Home() {
                   </p>
                   <div className="mt-4 p-3 bg-orange-50 rounded-lg border border-orange-200">
                     <p className="text-xs text-orange-800 font-medium">
-                      💡 Husk: Hvis du ikke tager en anden opgave, skal du hjælpe med opvask
+                      💡 Husk: Hvis du spiser med og ikke tager en anden opgave, skal du hjælpe med opvask
                     </p>
                   </div>
                 </div>
