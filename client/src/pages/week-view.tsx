@@ -8,7 +8,7 @@ import { Link } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { da } from "date-fns/locale";
-import { getCurrentWeekStart, getNextWeekStart, getWeekDates } from "@shared/schema";
+import { getCurrentWeekStart, getNextWeekStart, getWeekDates, formatLocalYMD } from "@shared/schema";
 import { ChevronLeft, ChevronRight, Plus, Minus } from "lucide-react";
 
 type TaskType = 'kok' | 'indkoeb' | 'bord' | 'opvask';
@@ -137,7 +137,8 @@ export default function WeekView() {
     const current = new Date(currentWeekStart + 'T00:00:00');
     const offset = direction === 'next' ? 7 : -7;
     current.setDate(current.getDate() + offset);
-    setCurrentWeekStart(current.toISOString().split('T')[0]);
+    current.setHours(0, 0, 0, 0); // Normalize to local midnight
+    setCurrentWeekStart(formatLocalYMD(current));
   };
 
   const goToCurrentWeek = () => {
@@ -257,7 +258,7 @@ export default function WeekView() {
           const tasks = assignment?.tasks || { kok: null, indkoeb: null, bord: null, opvask: null };
           const aloneInKitchen = assignment?.aloneInKitchen;
           const dishOfTheDay = assignment?.dishOfTheDay;
-          const isToday = date === new Date().toISOString().split('T')[0];
+          const isToday = date === formatLocalYMD(new Date());
 
           const tasksAssigned = Object.values(tasks).filter(Boolean).length;
           const totalTasks = Object.keys(tasks).length;

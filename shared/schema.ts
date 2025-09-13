@@ -24,6 +24,16 @@ export type TaskType = 'kok' | 'indkoeb' | 'bord' | 'opvask';
 export type Tasks = Record<TaskType, string | null>;
 
 // Helper functions for date operations
+
+// Format date as YYYY-MM-DD in local timezone
+export function formatLocalYMD(date: Date): string {
+  date.setHours(0, 0, 0, 0); // Normalize to local midnight
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
 export function getWeekDates(startDate: string): string[] {
   const dates: string[] = [];
   const start = new Date(startDate + 'T00:00:00');
@@ -31,7 +41,8 @@ export function getWeekDates(startDate: string): string[] {
   for (let i = 0; i < 7; i++) {
     const date = new Date(start);
     date.setDate(start.getDate() + i);
-    dates.push(date.toISOString().split('T')[0]);
+    date.setHours(0, 0, 0, 0); // Normalize to local midnight
+    dates.push(formatLocalYMD(date));
   }
   
   return dates;
@@ -43,12 +54,14 @@ export function getCurrentWeekStart(): string {
   const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek; // Monday = 1, Sunday = 0
   const monday = new Date(today);
   monday.setDate(today.getDate() + mondayOffset);
-  return monday.toISOString().split('T')[0];
+  monday.setHours(0, 0, 0, 0); // Normalize to local midnight
+  return formatLocalYMD(monday);
 }
 
 export function getNextWeekStart(): string {
   const currentWeekStart = getCurrentWeekStart();
   const nextWeek = new Date(currentWeekStart + 'T00:00:00');
   nextWeek.setDate(nextWeek.getDate() + 7);
-  return nextWeek.toISOString().split('T')[0];
+  nextWeek.setHours(0, 0, 0, 0); // Normalize to local midnight
+  return formatLocalYMD(nextWeek);
 }
