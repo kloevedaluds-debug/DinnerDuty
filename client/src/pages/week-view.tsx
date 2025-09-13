@@ -9,7 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { da } from "date-fns/locale";
 import { getCurrentWeekStart, getNextWeekStart, getWeekDates, formatLocalYMD } from "@shared/schema";
-import { ChevronLeft, ChevronRight, Plus, Minus } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, Minus, Download } from "lucide-react";
 
 type TaskType = 'kok' | 'indkoeb' | 'bord' | 'opvask';
 type Tasks = Record<TaskType, string | null>;
@@ -57,6 +57,24 @@ export default function WeekView() {
   const dishTimersRef = useRef<Record<string, NodeJS.Timeout>>({});
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // Download calendar file for assigned task
+  const downloadCalendar = (date: string, taskType: TaskType, resident: string) => {
+    const url = `/api/tasks/calendar/${date}/${taskType}/${encodeURIComponent(resident)}`;
+    
+    // Create a temporary link to trigger download
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${TASK_CONFIG[taskType].title}_${resident}_${date}.ics`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    toast({
+      title: "Kalender downloadet",
+      description: `Kalenderfil for ${TASK_CONFIG[taskType].title} (${resident}) er downloadet.`,
+    });
+  };
 
   const { data: weekData, isLoading } = useQuery<WeekData>({
     queryKey: ['/api/tasks/week', currentWeekStart],
@@ -370,8 +388,20 @@ export default function WeekView() {
                       </div>
                       
                       {assignedResident ? (
-                        <div className="text-xs bg-green-500 text-white px-3 py-1 rounded-full font-semibold text-center">
-                          ✓ {assignedResident}
+                        <div className="flex items-center gap-1 justify-between">
+                          <div className="text-xs bg-green-500 text-white px-3 py-1 rounded-full font-semibold text-center flex-1">
+                            ✓ {assignedResident}
+                          </div>
+                          <Button
+                            onClick={() => downloadCalendar(date, taskType as TaskType, assignedResident)}
+                            variant="ghost"
+                            size="sm"
+                            className="h-6 w-6 p-0 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-full"
+                            data-testid={`button-download-week-${taskType}-${date}`}
+                            title={`Download kalender for ${config.shortTitle}`}
+                          >
+                            <Download className="h-2.5 w-2.5" />
+                          </Button>
                         </div>
                       ) : (
                         <div className="space-y-2">

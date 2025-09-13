@@ -8,7 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { da } from "date-fns/locale";
 import { Link } from "wouter";
-import { Calendar, Plus, Minus } from "lucide-react";
+import { Calendar, Plus, Minus, Download } from "lucide-react";
 import { AdminButton } from "@/components/AdminButton";
 
 type TaskType = 'kok' | 'indkoeb' | 'bord' | 'opvask';
@@ -46,6 +46,24 @@ export default function Home() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
+  // Download calendar file for assigned task
+  const downloadCalendar = (date: string, taskType: TaskType, resident: string) => {
+    const url = `/api/tasks/calendar/${date}/${taskType}/${encodeURIComponent(resident)}`;
+    
+    // Create a temporary link to trigger download
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${TASK_CONFIG[taskType].title}_${resident}_${date}.ics`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    toast({
+      title: "Kalender downloadet",
+      description: `Kalenderfil for ${TASK_CONFIG[taskType].title} (${resident}) er downloadet.`,
+    });
+  };
+
   const { data: assignment, isLoading } = useQuery<TaskAssignment>({
     queryKey: ['/api/tasks', currentDate],
     staleTime: 0,
@@ -61,7 +79,9 @@ export default function Home() {
       return response.json();
     },
     onSuccess: () => {
+      // Invalidate both daily and weekly queries
       queryClient.invalidateQueries({ queryKey: ['/api/tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/tasks/week'] });
       toast({
         title: "Opgave tildelt",
         description: "Opgaven er blevet opdateret succesfuldt.",
@@ -85,7 +105,9 @@ export default function Home() {
       return response.json();
     },
     onSuccess: () => {
+      // Invalidate both daily and weekly queries
       queryClient.invalidateQueries({ queryKey: ['/api/tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/tasks/week'] });
       toast({
         title: "Køkken præference opdateret",
         description: "Din køkken præference er blevet gemt.",
@@ -109,7 +131,9 @@ export default function Home() {
       return response.json();
     },
     onSuccess: () => {
+      // Invalidate both daily and weekly queries
       queryClient.invalidateQueries({ queryKey: ['/api/tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/tasks/week'] });
       toast({
         title: "Dagens ret opdateret",
         description: "Dagens ret er blevet gemt.",
@@ -132,7 +156,9 @@ export default function Home() {
       return response.json();
     },
     onSuccess: () => {
+      // Invalidate both daily and weekly queries
       queryClient.invalidateQueries({ queryKey: ['/api/tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/tasks/week'] });
       toast({
         title: "Opgaver nulstillet",
         description: "Alle opgaver er blevet nulstillet succesfuldt.",
@@ -193,7 +219,9 @@ export default function Home() {
       return response.json();
     },
     onSuccess: () => {
+      // Invalidate both daily and weekly queries
       queryClient.invalidateQueries({ queryKey: ['/api/tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/tasks/week'] });
       setNewShoppingItem('');
       toast({
         title: "Vare tilføjet",
@@ -218,7 +246,9 @@ export default function Home() {
       return response.json();
     },
     onSuccess: () => {
+      // Invalidate both daily and weekly queries
       queryClient.invalidateQueries({ queryKey: ['/api/tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/tasks/week'] });
       toast({
         title: "Vare fjernet",
         description: "Varen er blevet fjernet fra indkøbslisten.",
@@ -431,9 +461,21 @@ export default function Home() {
                     <div className="text-right">
                       {assignedResident ? (
                         <div className="flex flex-col items-end gap-1">
-                          <span className="inline-flex items-center px-4 py-2 rounded-full text-sm font-semibold bg-green-500 text-white shadow-sm">
-                            ✓ {assignedResident}
-                          </span>
+                          <div className="flex items-center gap-2">
+                            <span className="inline-flex items-center px-4 py-2 rounded-full text-sm font-semibold bg-green-500 text-white shadow-sm">
+                              ✓ {assignedResident}
+                            </span>
+                            <Button
+                              onClick={() => downloadCalendar(currentDate, taskType as TaskType, assignedResident)}
+                              variant="outline"
+                              size="sm"
+                              className="h-8 w-8 p-0 bg-blue-50 hover:bg-blue-100 border-blue-200 text-blue-600"
+                              data-testid={`button-download-${taskType}`}
+                              title={`Download kalender for ${config.title}`}
+                            >
+                              <Download className="h-3 w-3" />
+                            </Button>
+                          </div>
                           <span className="text-xs text-green-600 font-medium">Tildelt</span>
                         </div>
                       ) : (

@@ -5,6 +5,56 @@ import { setupAuth, isAuthenticated, isAdmin } from "./replitAuth";
 import { z } from "zod";
 import { getWeekDates, getCurrentWeekStart, getNextWeekStart } from "@shared/schema";
 
+// Generate ICS (iCalendar) content for task assignments
+function generateICSContent(date: string, taskType: string, resident: string, taskTitle: string, description: string): string {
+  const now = new Date();
+  const eventDate = new Date(date);
+  
+  // Set event time based on task type
+  const taskTimes = {
+    kok: { start: "17:00", end: "19:00" },       // Cooking: 5-7 PM
+    indkoeb: { start: "15:00", end: "16:00" },   // Shopping: 3-4 PM
+    bord: { start: "17:30", end: "18:00" },     // Table setting: 5:30-6 PM
+    opvask: { start: "19:00", end: "20:00" },   // Dishes: 7-8 PM
+  };
+  
+  const times = taskTimes[taskType as keyof typeof taskTimes] || { start: "17:00", end: "18:00" };
+  
+  // Format dates for ICS
+  const formatICSDate = (date: Date, time: string): string => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const [hour, minute] = time.split(':');
+    return `${year}${month}${day}T${hour}${minute}00`;
+  };
+  
+  const startDateTime = formatICSDate(eventDate, times.start);
+  const endDateTime = formatICSDate(eventDate, times.end);
+  const createdDateTime = now.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+  
+  // Generate unique ID
+  const uid = `${taskType}-${resident}-${date}-${Date.now()}@dinnerduty.onrender.com`;
+  
+  return `BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//DinnerDuty//Task Assignment//EN
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+BEGIN:VEVENT
+UID:${uid}
+DTSTAMP:${createdDateTime}
+DTSTART:${startDateTime}
+DTEND:${endDateTime}
+SUMMARY:${taskTitle} - ${resident}
+DESCRIPTION:${description}\nTildelt til: ${resident}
+LOCATION:Køkkenet
+STATUS:CONFIRMED
+TRANSP:OPAQUE
+END:VEVENT
+END:VCALENDAR`;
+}
+
 export async function registerRoutes(app: Express): Promise<Server> {
   // Setup authentication middleware
   await setupAuth(app);
@@ -123,6 +173,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } else {
         res.status(500).json({ message: "Failed to set dish of the day" });
       }
+    }
+  });
+
+  // Generate calendar (.ics) file for task assignment
+  app.get("/api/tasks/calendar/:date/:taskType/:resident", async (req, res) => {
+    try {
+      const { date, taskType, resident } = req.params;
+      
+      // Validate taskType
+      const validTasks = ['kok', 'indkoeb', 'bord', 'opvask'];
+      if (!validTasks.includes(taskType)) {
+        return res.status(400).json({ message: "Invalid task type" });
+      }
+      
+      // Task configurations for calendar
+      const taskConfig = {
+        kok: { title: "Kok", description: "Tilberede aftensmaden" },
+        indkoeb: { title: "Indkøb", description: "Handle ingredienser" },
+        bord: { title: "Dække bord", description: "Sætte bordet til aftensmad" },
+        opvask: { title: "Vaske op", description: "Rydde op efter måltidet" },
+      };
+      
+      const task = taskConfig[taskType as keyof typeof taskConfig];
+      const icsContent = generateICSContent(date, taskType, resident, task.title, task.description);
+      
+      // Set headers for file download
+      res.setHeader('Content-Type', 'text/calendar; charset=utf-8');
+      res.setHeader('Content-Disposition', `attachment; filename="${task.title}_${resident}_${date}.ics"`);
+      res.send(icsContent);
+    } catch (error) {
+      console.error("Error generating calendar file:", error);
+      res.status(500).json({ message: "Failed to generate calendar file" });
     }
   });
 
