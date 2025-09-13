@@ -12,6 +12,7 @@ interface BasicLoginProps {
 
 export function BasicLogin({ onSuccess }: BasicLoginProps) {
   const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -29,6 +30,15 @@ export function BasicLogin({ onSuccess }: BasicLoginProps) {
       return;
     }
 
+    if (!password) {
+      toast({
+        title: "Password påkrævet",
+        description: "Du skal indtaste et password",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsLoading(true);
     try {
       const response = await fetch("/api/auth/basic/login", {
@@ -36,7 +46,7 @@ export function BasicLogin({ onSuccess }: BasicLoginProps) {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ email, firstName, lastName }),
+        body: JSON.stringify({ email, password, firstName, lastName }),
       });
 
       if (!response.ok) {
@@ -81,6 +91,18 @@ export function BasicLogin({ onSuccess }: BasicLoginProps) {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 data-testid="input-email"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="password">Password *</Label>
+              <Input
+                id="password"
+                type="password"
+                placeholder="Indtast password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                data-testid="input-password"
               />
             </div>
             <div className="space-y-2">

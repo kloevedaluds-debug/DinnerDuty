@@ -17,6 +17,7 @@ const SESSION_SECRET = process.env.SESSION_SECRET || "development-secret-key";
 const NODE_ENV = process.env.NODE_ENV || "development";
 const AUTH_MODE = process.env.AUTH_MODE || (process.env.REPL_ID ? "replit" : "basic");
 const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || '').split(',').map(e => e.trim()).filter(Boolean);
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "Annerboss!";
 
 // Create memory store for sessions in development
 const MemoryStoreFactory = MemoryStore(session);
@@ -102,9 +103,23 @@ export async function setupAuth(app: Express) {
     // Basic login route
     app.post("/api/auth/basic/login", async (req, res) => {
       try {
-        const { email, firstName, lastName } = req.body;
+        const { email, password, firstName, lastName } = req.body;
         if (!email) {
           return res.status(400).json({ message: "Email is required" });
+        }
+        
+        if (!password) {
+          return res.status(400).json({ message: "Password is required" });
+        }
+
+        // Validate password for admin users
+        if (ADMIN_EMAILS.includes(email)) {
+          if (password !== ADMIN_PASSWORD) {
+            return res.status(401).json({ message: "Invalid password" });
+          }
+        } else {
+          // For non-admin users, any password is accepted for basic access
+          // (You could add different password rules here if needed)
         }
 
         // Create or update user
