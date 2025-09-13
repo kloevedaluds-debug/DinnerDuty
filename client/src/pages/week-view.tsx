@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
@@ -53,6 +53,8 @@ function formatWeekTitle(weekStart: string): string {
 export default function WeekView() {
   const [currentWeekStart, setCurrentWeekStart] = useState(getCurrentWeekStart());
   const [newResidentInputs, setNewResidentInputs] = useState<Record<string, string>>({});
+  const [dishInputs, setDishInputs] = useState<Record<string, string>>({});
+  const dishTimersRef = useRef<Record<string, NodeJS.Timeout>>({});
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -110,6 +112,30 @@ export default function WeekView() {
     },
   });
 
+  const setDishOfTheDayMutation = useMutation({
+    mutationFn: async ({ date, dish }: { date: string; dish: string | null }) => {
+      const response = await apiRequest('POST', '/api/tasks/dish-of-the-day', {
+        date,
+        dish,
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/tasks/week'] });
+      toast({
+        title: "Dagens ret opdateret",
+        description: "Dagens ret er blevet gemt.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Fejl",
+        description: "Der opstod en fejl ved opdatering af dagens ret.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleAssignTask = (date: string, taskType: TaskType, resident: string) => {
     if (resident.trim()) {
       assignTaskMutation.mutate({ date, taskType, resident: resident.trim() });
@@ -154,6 +180,25 @@ export default function WeekView() {
       ...prev,
       [key]: value
     }));
+  };
+
+  const updateDishInput = (date: string, value: string) => {
+    setDishInputs(prev => ({
+      ...prev,
+      [date]: value
+    }));
+    
+    // Clear existing timer for this date
+    if (dishTimersRef.current[date]) {
+      clearTimeout(dishTimersRef.current[date]);
+    }
+    
+    // Debounce dish updates  
+    dishTimersRef.current[date] = setTimeout(() => {
+      const trimmedDish = value.trim();
+      setDishOfTheDayMutation.mutate({ date, dish: trimmedDish || null });
+      delete dishTimersRef.current[date];
+    }, 500);
   };
 
   if (isLoading) {
@@ -355,15 +400,22 @@ export default function WeekView() {
                       </span>
                     </div>
                     
-                    {dishOfTheDay ? (
-                      <div className="text-xs bg-purple-500 text-white px-3 py-1 rounded-full font-semibold text-center break-words">
-                        {dishOfTheDay}
-                      </div>
-                    ) : (
-                      <div className="text-xs text-gray-500 px-3 py-1 rounded-full bg-gray-100 border-2 border-dashed border-gray-300">
-                        Ikke valgt
-                      </div>
-                    )}
+                    <div className="space-y-2">
+                      <Input
+                        type="text"
+                        placeholder="Hvad laver vi..."
+                        className="text-xs h-8 rounded-lg border-2 border-dashed border-purple-300 bg-white/70 text-center"
+                        value={dishInputs[date] || dishOfTheDay || ''}
+                        onChange={(e) => updateDishInput(date, e.target.value)}
+                        disabled={setDishOfTheDayMutation.isPending}
+                        data-testid={`input-dish-${date}`}
+                      />
+                      {dishOfTheDay && (
+                        <div className="text-xs bg-purple-500 text-white px-3 py-1 rounded-full font-semibold text-center break-words">
+                          {dishOfTheDay}
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
 
