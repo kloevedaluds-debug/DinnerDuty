@@ -177,23 +177,8 @@ export class MemStorage implements IStorage {
   
   // Ensure task assignments persist across the week
   private async ensureWeekPersistence(date: string): Promise<void> {
-    const assignment = this.taskAssignments.get(date);
-    if (!assignment) return;
-    
-    // If this is a cooking assignment, preserve dish across the week
-    if (assignment.tasks.kok && assignment.dishOfTheDay) {
-      const currentWeekStart = getCurrentWeekStart();
-      const weekDates = getWeekDates(currentWeekStart);
-      
-      // Only apply to dates that don't already have a dish
-      for (const weekDate of weekDates) {
-        const weekAssignment = this.taskAssignments.get(weekDate);
-        if (weekAssignment && !weekAssignment.dishOfTheDay && weekDate !== date) {
-          weekAssignment.dishOfTheDay = assignment.dishOfTheDay;
-          this.taskAssignments.set(weekDate, weekAssignment);
-        }
-      }
-    }
+    // Removed automatic dish copying - each day should have its own dish
+    return;
   }
 
   async getTaskAssignmentByDate(date: string): Promise<TaskAssignment | undefined> {
@@ -269,9 +254,6 @@ export class MemStorage implements IStorage {
       dishOfTheDay: existing.dishOfTheDay,
       shoppingList: existing.shoppingList ?? [],
     });
-    
-    // Ensure week-long persistence for relevant data
-    await this.ensureWeekPersistence(date);
     
     // Save data to file
     await this.saveData();
