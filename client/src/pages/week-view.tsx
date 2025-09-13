@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
@@ -73,7 +73,7 @@ export default function WeekView() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/tasks/week'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/tasks/week', currentWeekStart] });
       toast({
         title: "Opgave tildelt",
         description: "Opgaven er blevet opdateret succesfuldt.",
@@ -97,7 +97,7 @@ export default function WeekView() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/tasks/week'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/tasks/week', currentWeekStart] });
       toast({
         title: "Køkken præference opdateret",
         description: "Køkken præference er blevet gemt.",
@@ -120,8 +120,13 @@ export default function WeekView() {
       });
       return response.json();
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/tasks/week'] });
+    onSuccess: (_data, { date }) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/tasks/week', currentWeekStart] });
+      setDishInputs(prev => {
+        const updated = { ...prev };
+        delete updated[date];
+        return updated;
+      });
       toast({
         title: "Dagens ret opdateret",
         description: "Dagens ret er blevet gemt.",
@@ -181,6 +186,14 @@ export default function WeekView() {
       [key]: value
     }));
   };
+
+  // Cleanup timers on week change or unmount
+  useEffect(() => {
+    // Clear all pending timers when week changes
+    Object.values(dishTimersRef.current).forEach(timer => clearTimeout(timer));
+    dishTimersRef.current = {};
+    setDishInputs({});
+  }, [currentWeekStart]);
 
   const updateDishInput = (date: string, value: string) => {
     setDishInputs(prev => ({

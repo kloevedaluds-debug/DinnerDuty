@@ -1,37 +1,37 @@
 {
   "app.title": {
-    "id": "f41bb639-94c2-49f2-b8f8-f5bdd1ef84b4",
+    "id": "2bae0761-3dad-45b2-9203-c3f63128a48b",
     "key": "app.title",
     "value": "Aftensmad i dag",
     "description": "Hovedtitel på appen",
-    "updatedAt": "2025-09-13T20:10:12.317Z"
+    "updatedAt": "2025-09-13T20:15:52.296Z"
   },
   "instructions.how_to_use": {
-    "id": "d486afdb-50a5-42fc-91ce-5c1433146aab",
+    "id": "cc1958fa-be2c-4334-944e-755b549ed7ae",
     "key": "instructions.how_to_use",
     "value": "💡 Hvordan bruger du appen",
     "description": "Hovedoverskrift for instruktioner",
-    "updatedAt": "2025-09-13T20:10:12.317Z"
+    "updatedAt": "2025-09-13T20:15:52.297Z"
   },
   "instructions.assign_tasks": {
-    "id": "b5a34742-645e-4f2c-9115-d39cb9c78a44",
+    "id": "efc41928-b182-4b27-ac61-5044e3f2ae97",
     "key": "instructions.assign_tasks",
     "value": "Skriv et navn og tryk Enter for at tildele opgaver",
     "description": "Instruktion for opgavetildeling",
-    "updatedAt": "2025-09-13T20:10:12.317Z"
+    "updatedAt": "2025-09-13T20:15:52.297Z"
   },
   "instructions.auto_save": {
-    "id": "ef477f6e-9160-49bd-ac76-987d7314964c",
+    "id": "eafdd1bf-b8e1-4216-abb7-4e271fbf5585",
     "key": "instructions.auto_save",
     "value": "✅ Alle ændringer gemmes automatisk",
     "description": "Information om automatisk gemning",
-    "updatedAt": "2025-09-13T20:10:12.317Z"
+    "updatedAt": "2025-09-13T20:15:52.297Z"
   },
   "notice.dishwashing_requirement": {
-    "id": "87e41d63-8a9c-4bfe-bcbf-f543cd4976a9",
+    "id": "e524c06f-9c58-45d9-b866-5b073d013c67",
     "key": "notice.dishwashing_requirement",
     "value": "Bemærk: Beboere der ikke tager andre opgaver skal deltage i opvask, medmindre andet er aftalt med personalet.",
     "description": "Vigtig meddelelse om opvask deltagelse",
-    "updatedAt": "2025-09-13T20:10:12.317Z"
+    "updatedAt": "2025-09-13T20:15:52.297Z"
   }
 }
