@@ -569,7 +569,7 @@ export default function Home() {
             <div className="mr-3 text-2xl p-2 rounded-full bg-white/20 backdrop-blur-sm">⚠️</div>
             Vigtigt at vide
           </h2>
-          <p className="text-orange-100 text-sm mt-1">Regler for opgavefordeling</p>
+          <p className="text-orange-100 text-sm mt-1">Opgavefordeling</p>
         </div>
         
         <CardContent className="p-6">
