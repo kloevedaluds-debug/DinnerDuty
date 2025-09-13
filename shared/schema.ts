@@ -97,3 +97,20 @@ export const insertUserSchema = createInsertSchema(users).omit({
 export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
+
+// App content/settings schema for admin management
+export const appContent = pgTable("app_content", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  key: varchar("key", { length: 100 }).notNull().unique(),
+  value: text("value").notNull(),
+  description: varchar("description", { length: 500 }),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const insertAppContentSchema = createInsertSchema(appContent).omit({
+  id: true,
+  updatedAt: true,
+});
+
+export type InsertAppContent = z.infer<typeof insertAppContentSchema>;
+export type AppContent = typeof appContent.$inferSelect;

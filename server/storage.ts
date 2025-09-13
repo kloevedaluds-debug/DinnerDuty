@@ -1,4 +1,4 @@
-import { type TaskAssignment, type InsertTaskAssignment, type Tasks, type User, type UpsertUser } from "@shared/schema";
+import { type TaskAssignment, type InsertTaskAssignment, type Tasks, type User, type UpsertUser, type AppContent, type InsertAppContent } from "@shared/schema";
 import { randomUUID } from "crypto";
 
 export interface IStorage {
@@ -16,15 +16,60 @@ export interface IStorage {
   // User operations for Replit Auth
   getUser(id: string): Promise<User | undefined>;
   upsertUser(user: UpsertUser): Promise<User>;
+  // App content management for admin
+  getAppContent(key: string): Promise<AppContent | undefined>;
+  getAllAppContent(): Promise<AppContent[]>;
+  upsertAppContent(content: InsertAppContent): Promise<AppContent>;
+  deleteAppContent(key: string): Promise<boolean>;
 }
 
 export class MemStorage implements IStorage {
   private taskAssignments: Map<string, TaskAssignment>;
   private users: Map<string, User>;
+  private appContent: Map<string, AppContent>;
 
   constructor() {
     this.taskAssignments = new Map();
     this.users = new Map();
+    this.appContent = new Map();
+    
+    // Initialize default content for admin management
+    this.initializeDefaultContent();
+  }
+  
+  private initializeDefaultContent() {
+    const defaultContent: Record<string, { value: string; description: string }> = {
+      'app.title': {
+        value: 'Aftensmad i dag',
+        description: 'Hovedtitel på appen'
+      },
+      'instructions.how_to_use': {
+        value: '💡 Hvordan bruger du appen',
+        description: 'Hovedoverskrift for instruktioner'
+      },
+      'instructions.assign_tasks': {
+        value: 'Skriv et navn og tryk Enter for at tildele opgaver',
+        description: 'Instruktion for opgavetildeling'
+      },
+      'instructions.auto_save': {
+        value: '✅ Alle ændringer gemmes automatisk',
+        description: 'Information om automatisk gemning'
+      },
+      'notice.dishwashing_requirement': {
+        value: 'Bemærk: Beboere der ikke tager andre opgaver skal deltage i opvask, medmindre andet er aftalt med personalet.',
+        description: 'Vigtig meddelelse om opvask deltagelse'
+      }
+    };
+    
+    for (const [key, { value, description }] of Object.entries(defaultContent)) {
+      this.appContent.set(key, {
+        id: randomUUID(),
+        key,
+        value,
+        description,
+        updatedAt: new Date(),
+      });
+    }
   }
 
   async getTaskAssignmentByDate(date: string): Promise<TaskAssignment | undefined> {
@@ -258,6 +303,34 @@ export class MemStorage implements IStorage {
       this.users.set(userData.id, newUser);
       return newUser;
     }
+  }
+
+  // App content management methods
+  async getAppContent(key: string): Promise<AppContent | undefined> {
+    return this.appContent.get(key);
+  }
+
+  async getAllAppContent(): Promise<AppContent[]> {
+    return Array.from(this.appContent.values());
+  }
+
+  async upsertAppContent(content: InsertAppContent): Promise<AppContent> {
+    const existingContent = this.appContent.get(content.key);
+    
+    const contentData: AppContent = {
+      id: existingContent?.id || randomUUID(),
+      key: content.key,
+      value: content.value,
+      description: content.description,
+      updatedAt: new Date(),
+    };
+    
+    this.appContent.set(content.key, contentData);
+    return contentData;
+  }
+
+  async deleteAppContent(key: string): Promise<boolean> {
+    return this.appContent.delete(key);
   }
 }
 

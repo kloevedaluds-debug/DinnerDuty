@@ -6,14 +6,25 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
-import { Shield, Settings, Users, FileText } from "lucide-react";
+import { Shield, Settings, Users, FileText, Edit, Save, X } from "lucide-react";
+
+interface AppContent {
+  id: string;
+  key: string;
+  value: string;
+  description?: string;
+  updatedAt: string;
+}
 
 export default function AdminPage() {
   const { user, isLoading, isAuthenticated, isAdmin } = useAuth();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [editingContent, setEditingContent] = useState<string | null>(null);
+  const [editValues, setEditValues] = useState<{ value: string; description: string }>({ value: "", description: "" });
 
   // Redirect if not authenticated or not admin
   useEffect(() => {
@@ -40,6 +51,38 @@ export default function AdminPage() {
     }
   }, [isAuthenticated, isAdmin, isLoading, toast, setLocation]);
 
+  // Fetch all app content
+  const { data: contentList, isLoading: contentLoading } = useQuery<AppContent[]>({
+    queryKey: ['/api/admin/content'],
+    enabled: isAdmin,
+  });
+
+  // Update content mutation
+  const updateContentMutation = useMutation({
+    mutationFn: async ({ key, value, description }: { key: string; value: string; description?: string }) => {
+      const response = await apiRequest('PUT', `/api/admin/content/${key}`, {
+        value,
+        description,
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/content'] });
+      setEditingContent(null);
+      toast({
+        title: "Indhold opdateret",
+        description: "Ændringerne er gemt succesfuldt.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Fejl",
+        description: `Kunne ikke opdatere indholdet: ${error.message}`,
+        variant: "destructive",
+      });
+    },
+  });
+
   const makeAdminMutation = useMutation({
     mutationFn: async () => {
       const response = await apiRequest("POST", "/api/admin/make-admin");
@@ -61,6 +104,30 @@ export default function AdminPage() {
       });
     },
   });
+
+  // Handle editing content
+  const handleEditContent = (content: AppContent) => {
+    setEditingContent(content.key);
+    setEditValues({
+      value: content.value,
+      description: content.description || "",
+    });
+  };
+
+  const handleSaveContent = () => {
+    if (!editingContent) return;
+    
+    updateContentMutation.mutate({
+      key: editingContent,
+      value: editValues.value,
+      description: editValues.description,
+    });
+  };
+
+  const handleCancelEdit = () => {
+    setEditingContent(null);
+    setEditValues({ value: "", description: "" });
+  };
 
   if (isLoading) {
     return (
@@ -119,53 +186,107 @@ export default function AdminPage() {
         <p className="text-gray-600 mt-2">Administrer indhold og indstillinger for Aftensmad appen</p>
       </div>
 
-      {/* Admin Dashboard Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-        <Card className="rounded-2xl shadow-sm border border-gray-200 hover:shadow-lg transition-shadow">
-          <CardHeader>
-            <CardTitle className="text-xl flex items-center gap-3">
-              <FileText className="text-blue-500" size={24} />
-              Indhold Management
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-gray-600 mb-4">Rediger tekster, beskrivelser og meddelelser i appen</p>
-            <Button variant="outline" className="w-full" data-testid="button-content-management">
-              Administrer Indhold
-            </Button>
-          </CardContent>
-        </Card>
-
-        <Card className="rounded-2xl shadow-sm border border-gray-200 hover:shadow-lg transition-shadow">
-          <CardHeader>
-            <CardTitle className="text-xl flex items-center gap-3">
-              <Settings className="text-green-500" size={24} />
-              Opgave Indstillinger
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-gray-600 mb-4">Konfigurer opgavetyper og beskrivelser</p>
-            <Button variant="outline" className="w-full" data-testid="button-task-settings">
-              Administrer Opgaver
-            </Button>
-          </CardContent>
-        </Card>
-
-        <Card className="rounded-2xl shadow-sm border border-gray-200 hover:shadow-lg transition-shadow">
-          <CardHeader>
-            <CardTitle className="text-xl flex items-center gap-3">
-              <Users className="text-purple-500" size={24} />
-              Bruger Administration
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-gray-600 mb-4">Se brugere og administrer roller</p>
-            <Button variant="outline" className="w-full" data-testid="button-user-management">
-              Administrer Brugere
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
+      {/* Content Management Section */}
+      <Card className="rounded-2xl shadow-sm border border-gray-200 mb-8">
+        <CardHeader>
+          <CardTitle className="text-xl flex items-center gap-3">
+            <FileText className="text-blue-500" size={24} />
+            App Indhold Management
+          </CardTitle>
+          <p className="text-gray-600 mt-2">Rediger tekster og beskrivelser som vises i appen</p>
+        </CardHeader>
+        <CardContent>
+          {contentLoading ? (
+            <div className="space-y-4">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="animate-pulse">
+                  <div className="h-4 bg-gray-200 rounded w-1/4 mb-2"></div>
+                  <div className="h-10 bg-gray-200 rounded mb-2"></div>
+                  <div className="h-6 bg-gray-200 rounded w-3/4"></div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="space-y-6">
+              {contentList?.map((content) => (
+                <div key={content.key} className="border border-gray-200 rounded-lg p-4">
+                  <div className="flex items-start justify-between mb-3">
+                    <div>
+                      <h3 className="font-semibold text-gray-900">{content.key}</h3>
+                      {content.description && (
+                        <p className="text-sm text-gray-600">{content.description}</p>
+                      )}
+                    </div>
+                    {editingContent !== content.key && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleEditContent(content)}
+                        data-testid={`button-edit-${content.key}`}
+                      >
+                        <Edit size={16} className="mr-1" />
+                        Rediger
+                      </Button>
+                    )}
+                  </div>
+                  
+                  {editingContent === content.key ? (
+                    <div className="space-y-3">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Indhold
+                        </label>
+                        <Textarea
+                          value={editValues.value}
+                          onChange={(e) => setEditValues(prev => ({ ...prev, value: e.target.value }))}
+                          className="w-full"
+                          rows={3}
+                          data-testid={`input-content-value-${content.key}`}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Beskrivelse (valgfri)
+                        </label>
+                        <Input
+                          value={editValues.description}
+                          onChange={(e) => setEditValues(prev => ({ ...prev, description: e.target.value }))}
+                          placeholder="Beskrivelse af dette indhold..."
+                          data-testid={`input-content-description-${content.key}`}
+                        />
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          onClick={handleSaveContent}
+                          disabled={updateContentMutation.isPending}
+                          className="bg-green-600 hover:bg-green-700 text-white"
+                          data-testid={`button-save-${content.key}`}
+                        >
+                          <Save size={16} className="mr-1" />
+                          {updateContentMutation.isPending ? "Gemmer..." : "Gem"}
+                        </Button>
+                        <Button
+                          variant="outline"
+                          onClick={handleCancelEdit}
+                          disabled={updateContentMutation.isPending}
+                          data-testid={`button-cancel-${content.key}`}
+                        >
+                          <X size={16} className="mr-1" />
+                          Annuller
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="bg-gray-50 rounded p-3">
+                      <p className="text-gray-900 whitespace-pre-wrap">{content.value}</p>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Current User Info */}
       <Card className="rounded-2xl shadow-sm border border-green-200 bg-green-50">

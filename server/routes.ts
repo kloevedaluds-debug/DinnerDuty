@@ -270,6 +270,69 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json({ message: "Admin access confirmed", isAdmin: true });
   });
 
+  // Admin content management routes
+  app.get("/api/admin/content", isAdmin, async (req, res) => {
+    try {
+      const content = await storage.getAllAppContent();
+      res.json(content);
+    } catch (error) {
+      console.error("Error fetching content:", error);
+      res.status(500).json({ message: "Failed to fetch content" });
+    }
+  });
+
+  app.get("/api/admin/content/:key", isAdmin, async (req, res) => {
+    try {
+      const content = await storage.getAppContent(req.params.key);
+      if (!content) {
+        return res.status(404).json({ message: "Content not found" });
+      }
+      res.json(content);
+    } catch (error) {
+      console.error("Error fetching content:", error);
+      res.status(500).json({ message: "Failed to fetch content" });
+    }
+  });
+
+  app.put("/api/admin/content/:key", isAdmin, async (req, res) => {
+    try {
+      const schema = z.object({
+        value: z.string(),
+        description: z.string().optional(),
+      });
+
+      const { value, description } = schema.parse(req.body);
+      
+      const content = await storage.upsertAppContent({
+        key: req.params.key,
+        value,
+        description,
+      });
+      
+      res.json(content);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ message: "Invalid request data", errors: error.errors });
+      } else {
+        console.error("Error updating content:", error);
+        res.status(500).json({ message: "Failed to update content" });
+      }
+    }
+  });
+
+  app.delete("/api/admin/content/:key", isAdmin, async (req, res) => {
+    try {
+      const deleted = await storage.deleteAppContent(req.params.key);
+      if (!deleted) {
+        return res.status(404).json({ message: "Content not found" });
+      }
+      res.json({ message: "Content deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting content:", error);
+      res.status(500).json({ message: "Failed to delete content" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
