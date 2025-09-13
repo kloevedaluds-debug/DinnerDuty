@@ -9,7 +9,7 @@
       "opvask": null
     },
     "aloneInKitchen": null,
-    "dishOfTheDay": null,
+    "dishOfTheDay": "Curry with Chicken",
     "shoppingList": []
   },
   "2025-09-09": {
@@ -22,7 +22,7 @@
       "opvask": null
     },
     "aloneInKitchen": null,
-    "dishOfTheDay": null,
+    "dishOfTheDay": "Curry with Chicken",
     "shoppingList": []
   },
   "2025-09-10": {
@@ -35,7 +35,7 @@
       "opvask": null
     },
     "aloneInKitchen": null,
-    "dishOfTheDay": null,
+    "dishOfTheDay": "Curry with Chicken",
     "shoppingList": []
   },
   "2025-09-11": {
@@ -48,7 +48,7 @@
       "opvask": null
     },
     "aloneInKitchen": null,
-    "dishOfTheDay": null,
+    "dishOfTheDay": "Curry with Chicken",
     "shoppingList": []
   },
   "2025-09-12": {
@@ -61,20 +61,20 @@
       "opvask": null
     },
     "aloneInKitchen": null,
-    "dishOfTheDay": null,
+    "dishOfTheDay": "Curry with Chicken",
     "shoppingList": []
   },
   "2025-09-13": {
     "id": "26070dd5-6eb8-45d7-9a15-c2ff5629aec5",
     "date": "2025-09-13",
     "tasks": {
-      "kok": null,
-      "indkoeb": null,
-      "bord": null,
-      "opvask": null
+      "kok": "Alice",
+      "indkoeb": "Bob",
+      "bord": "Charlie",
+      "opvask": "Dana"
     },
     "aloneInKitchen": null,
-    "dishOfTheDay": null,
+    "dishOfTheDay": "Curry with Chicken",
     "shoppingList": []
   },
   "2025-09-14": {
@@ -87,7 +87,7 @@
       "opvask": null
     },
     "aloneInKitchen": null,
-    "dishOfTheDay": null,
+    "dishOfTheDay": "Curry with Chicken",
     "shoppingList": []
   }
 }

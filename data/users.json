@@ -1,1 +1,12 @@
-{}
+{
+  "365gCJ": {
+    "id": "365gCJ",
+    "email": "365gCJ@example.com",
+    "firstName": "John",
+    "lastName": "Doe",
+    "profileImageUrl": null,
+    "isAdmin": false,
+    "createdAt": "2025-09-13T18:31:04.532Z",
+    "updatedAt": "2025-09-13T18:31:04.532Z"
+  }
+}
