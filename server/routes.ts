@@ -217,8 +217,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Security: Only allow specific emails to become admin
       const AUTHORIZED_ADMIN_EMAILS = (process.env.ADMIN_EMAILS || '').split(',').map(e => e.trim()).filter(Boolean);
+      const isDevelopment = process.env.NODE_ENV === 'development';
       
-      if (!AUTHORIZED_ADMIN_EMAILS.includes(userEmail)) {
+      // In development, allow any email to become admin for testing purposes
+      if (!isDevelopment && !AUTHORIZED_ADMIN_EMAILS.includes(userEmail)) {
         return res.status(403).json({ message: "Not authorized to become admin" });
       }
       

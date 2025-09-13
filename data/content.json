@@ -1,0 +1,37 @@
+{
+  "app.title": {
+    "id": "1ba9c08e-f319-4fe2-bbc9-38454316045b",
+    "key": "app.title",
+    "value": "Aftensmad i dag",
+    "description": "Hovedtitel på appen",
+    "updatedAt": "2025-09-13T18:28:18.612Z"
+  },
+  "instructions.how_to_use": {
+    "id": "427b5e7e-5ec0-42f6-b64b-ac2c82059f06",
+    "key": "instructions.how_to_use",
+    "value": "💡 Hvordan bruger du appen",
+    "description": "Hovedoverskrift for instruktioner",
+    "updatedAt": "2025-09-13T18:28:18.612Z"
+  },
+  "instructions.assign_tasks": {
+    "id": "848ba8cb-d398-4eb4-b9d8-5f18c06ab473",
+    "key": "instructions.assign_tasks",
+    "value": "Skriv et navn og tryk Enter for at tildele opgaver",
+    "description": "Instruktion for opgavetildeling",
+    "updatedAt": "2025-09-13T18:28:18.612Z"
+  },
+  "instructions.auto_save": {
+    "id": "65f630dc-472a-4188-b8b0-e9156a1915f1",
+    "key": "instructions.auto_save",
+    "value": "✅ Alle ændringer gemmes automatisk",
+    "description": "Information om automatisk gemning",
+    "updatedAt": "2025-09-13T18:28:18.612Z"
+  },
+  "notice.dishwashing_requirement": {
+    "id": "3095d43c-f6d9-4582-ad67-9f4421e0b29a",
+    "key": "notice.dishwashing_requirement",
+    "value": "Bemærk: Beboere der ikke tager andre opgaver skal deltage i opvask, medmindre andet er aftalt med personalet.",
+    "description": "Vigtig meddelelse om opvask deltagelse",
+    "updatedAt": "2025-09-13T18:28:18.612Z"
+  }
+}

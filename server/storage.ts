@@ -1,5 +1,7 @@
-import { type TaskAssignment, type InsertTaskAssignment, type Tasks, type User, type UpsertUser, type AppContent, type InsertAppContent } from "@shared/schema";
+import { type TaskAssignment, type InsertTaskAssignment, type Tasks, type User, type UpsertUser, type AppContent, type InsertAppContent, getCurrentWeekStart, getWeekDates } from "@shared/schema";
 import { randomUUID } from "crypto";
+import { promises as fs } from "fs";
+import path from "path";
 
 export interface IStorage {
   getTaskAssignmentByDate(date: string): Promise<TaskAssignment | undefined>;
@@ -27,14 +29,95 @@ export class MemStorage implements IStorage {
   private taskAssignments: Map<string, TaskAssignment>;
   private users: Map<string, User>;
   private appContent: Map<string, AppContent>;
+  private dataDir: string;
 
   constructor() {
     this.taskAssignments = new Map();
     this.users = new Map();
     this.appContent = new Map();
+    this.dataDir = path.join(process.cwd(), 'data');
+    
+    // Initialize and load data
+    void this.initializeStorage();
+  }
+  
+  private async initializeStorage() {
+    // Ensure data directory exists
+    try {
+      await fs.mkdir(this.dataDir, { recursive: true });
+    } catch (error) {
+      // Directory might already exist
+    }
+    
+    // Load existing data or initialize defaults
+    await this.loadData();
     
     // Initialize default content for admin management
     this.initializeDefaultContent();
+    
+    // Ensure current week data exists
+    this.ensureCurrentWeekData();
+    
+    // Save initial state
+    await this.saveData();
+  }
+  
+  private async loadData() {
+    try {
+      // Load task assignments
+      const tasksPath = path.join(this.dataDir, 'tasks.json');
+      try {
+        const tasksData = await fs.readFile(tasksPath, 'utf-8');
+        const tasks = JSON.parse(tasksData) as Record<string, TaskAssignment>;
+        this.taskAssignments = new Map(Object.entries(tasks));
+      } catch {
+        // File doesn't exist or is invalid, start fresh
+      }
+      
+      // Load users
+      const usersPath = path.join(this.dataDir, 'users.json');
+      try {
+        const usersData = await fs.readFile(usersPath, 'utf-8');
+        const users = JSON.parse(usersData) as Record<string, User>;
+        this.users = new Map(Object.entries(users));
+      } catch {
+        // File doesn't exist or is invalid, start fresh
+      }
+      
+      // Load app content
+      const contentPath = path.join(this.dataDir, 'content.json');
+      try {
+        const contentData = await fs.readFile(contentPath, 'utf-8');
+        const content = JSON.parse(contentData) as Record<string, AppContent>;
+        this.appContent = new Map(Object.entries(content));
+      } catch {
+        // File doesn't exist or is invalid, start fresh
+      }
+    } catch (error) {
+      console.error('Error loading data:', error);
+      // Continue with empty maps
+    }
+  }
+  
+  private async saveData() {
+    try {
+      // Save task assignments
+      const tasksPath = path.join(this.dataDir, 'tasks.json');
+      const tasksData = Object.fromEntries(this.taskAssignments);
+      await fs.writeFile(tasksPath, JSON.stringify(tasksData, null, 2));
+      
+      // Save users
+      const usersPath = path.join(this.dataDir, 'users.json');
+      const usersData = Object.fromEntries(this.users);
+      await fs.writeFile(usersPath, JSON.stringify(usersData, null, 2));
+      
+      // Save app content
+      const contentPath = path.join(this.dataDir, 'content.json');
+      const contentData = Object.fromEntries(this.appContent);
+      await fs.writeFile(contentPath, JSON.stringify(contentData, null, 2));
+    } catch (error) {
+      console.error('Error saving data:', error);
+    }
   }
   
   private initializeDefaultContent() {
@@ -69,6 +152,47 @@ export class MemStorage implements IStorage {
         description,
         updatedAt: new Date(),
       });
+    }
+  }
+  
+  // Ensure current week data exists with empty assignments
+  private ensureCurrentWeekData() {
+    const currentWeekStart = getCurrentWeekStart();
+    const weekDates = getWeekDates(currentWeekStart);
+    
+    for (const date of weekDates) {
+      if (!this.taskAssignments.has(date)) {
+        const emptyAssignment: TaskAssignment = {
+          id: randomUUID(),
+          date,
+          tasks: { kok: null, indkoeb: null, bord: null, opvask: null },
+          aloneInKitchen: null,
+          dishOfTheDay: null,
+          shoppingList: [],
+        };
+        this.taskAssignments.set(date, emptyAssignment);
+      }
+    }
+  }
+  
+  // Ensure task assignments persist across the week
+  private async ensureWeekPersistence(date: string): Promise<void> {
+    const assignment = this.taskAssignments.get(date);
+    if (!assignment) return;
+    
+    // If this is a cooking assignment, preserve dish across the week
+    if (assignment.tasks.kok && assignment.dishOfTheDay) {
+      const currentWeekStart = getCurrentWeekStart();
+      const weekDates = getWeekDates(currentWeekStart);
+      
+      // Only apply to dates that don't already have a dish
+      for (const weekDate of weekDates) {
+        const weekAssignment = this.taskAssignments.get(weekDate);
+        if (weekAssignment && !weekAssignment.dishOfTheDay && weekDate !== date) {
+          weekAssignment.dishOfTheDay = assignment.dishOfTheDay;
+          this.taskAssignments.set(weekDate, weekAssignment);
+        }
+      }
     }
   }
 
@@ -138,13 +262,21 @@ export class MemStorage implements IStorage {
     const updatedTasks = { ...existing.tasks as Tasks };
     updatedTasks[taskType as keyof Tasks] = resident;
 
-    return this.createOrUpdateTaskAssignment({
+    const updatedAssignment = await this.createOrUpdateTaskAssignment({
       date,
       tasks: updatedTasks,
       aloneInKitchen: existing.aloneInKitchen,
       dishOfTheDay: existing.dishOfTheDay,
       shoppingList: existing.shoppingList ?? [],
     });
+    
+    // Ensure week-long persistence for relevant data
+    await this.ensureWeekPersistence(date);
+    
+    // Save data to file
+    await this.saveData();
+    
+    return updatedAssignment;
   }
 
   async setAloneInKitchen(date: string, resident: string | null): Promise<TaskAssignment> {
@@ -292,10 +424,10 @@ export class MemStorage implements IStorage {
     } else {
       const newUser: User = {
         id: userData.id,
-        email: userData.email || null,
-        firstName: userData.firstName || null,
-        lastName: userData.lastName || null,
-        profileImageUrl: userData.profileImageUrl || null,
+        email: userData.email ?? null,
+        firstName: userData.firstName ?? null,
+        lastName: userData.lastName ?? null,
+        profileImageUrl: userData.profileImageUrl ?? null,
         isAdmin: userData.isAdmin || false,
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -321,7 +453,7 @@ export class MemStorage implements IStorage {
       id: existingContent?.id || randomUUID(),
       key: content.key,
       value: content.value,
-      description: content.description,
+      description: content.description ?? null,
       updatedAt: new Date(),
     };
     
