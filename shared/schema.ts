@@ -33,7 +33,6 @@ export function formatLocalYMD(date: Date): string {
   const day = String(date.getDate()).padStart(2, '0');
   return `${year}-${month}-${day}`;
 }
-
 export function getWeekDates(startDate: string): string[] {
   const dates: string[] = [];
   const start = new Date(startDate + 'T00:00:00');
