@@ -9,6 +9,7 @@ import { format } from "date-fns";
 import { da } from "date-fns/locale";
 import { Link } from "wouter";
 import { Calendar, Plus, Minus } from "lucide-react";
+import { AdminButton } from "@/components/AdminButton";
 
 type TaskType = 'kok' | 'indkoeb' | 'bord' | 'opvask';
 type Tasks = Record<TaskType, string | null>;
@@ -312,6 +313,7 @@ export default function Home() {
               📅 Ugeoversigt
             </Button>
           </Link>
+          <AdminButton />
         </div>
         
         <div className="mt-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-200">

@@ -1,4 +1,4 @@
-import { type TaskAssignment, type InsertTaskAssignment, type Tasks } from "@shared/schema";
+import { type TaskAssignment, type InsertTaskAssignment, type Tasks, type User, type UpsertUser } from "@shared/schema";
 import { randomUUID } from "crypto";
 
 export interface IStorage {
@@ -13,13 +13,18 @@ export interface IStorage {
   addShoppingItem(date: string, item: string): Promise<TaskAssignment>;
   removeShoppingItem(date: string, index: number): Promise<TaskAssignment>;
   updateShoppingList(date: string, items: string[]): Promise<TaskAssignment>;
+  // User operations for Replit Auth
+  getUser(id: string): Promise<User | undefined>;
+  upsertUser(user: UpsertUser): Promise<User>;
 }
 
 export class MemStorage implements IStorage {
   private taskAssignments: Map<string, TaskAssignment>;
+  private users: Map<string, User>;
 
   constructor() {
     this.taskAssignments = new Map();
+    this.users = new Map();
   }
 
   async getTaskAssignmentByDate(date: string): Promise<TaskAssignment | undefined> {
@@ -221,6 +226,38 @@ export class MemStorage implements IStorage {
       dishOfTheDay: existing.dishOfTheDay,
       shoppingList: items.filter(item => item.trim().length > 0),
     });
+  }
+
+  // User operations for Replit Auth
+  async getUser(id: string): Promise<User | undefined> {
+    return this.users.get(id);
+  }
+
+  async upsertUser(userData: UpsertUser): Promise<User> {
+    const existing = this.users.get(userData.id);
+    
+    if (existing) {
+      const updated: User = {
+        ...existing,
+        ...userData,
+        updatedAt: new Date(),
+      };
+      this.users.set(userData.id, updated);
+      return updated;
+    } else {
+      const newUser: User = {
+        id: userData.id,
+        email: userData.email || null,
+        firstName: userData.firstName || null,
+        lastName: userData.lastName || null,
+        profileImageUrl: userData.profileImageUrl || null,
+        isAdmin: userData.isAdmin || false,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      this.users.set(userData.id, newUser);
+      return newUser;
+    }
   }
 }
 

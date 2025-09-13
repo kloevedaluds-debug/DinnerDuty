@@ -1,10 +1,25 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
+import { setupAuth, isAuthenticated, isAdmin } from "./replitAuth";
 import { z } from "zod";
 import { getWeekDates, getCurrentWeekStart, getNextWeekStart } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Setup authentication middleware
+  await setupAuth(app);
+
+  // Auth routes
+  app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      res.json(user);
+    } catch (error) {
+      console.error("Error fetching user:", error);
+      res.status(500).json({ message: "Failed to fetch user" });
+    }
+  });
   // Get current date in YYYY-MM-DD format
   function getCurrentDate(): string {
     return new Date().toISOString().split('T')[0];
@@ -192,6 +207,67 @@ export async function registerRoutes(app: Express): Promise<Server> {
         res.status(500).json({ message: "Failed to update shopping list" });
       }
     }
+  });
+
+  // Secure admin grant - only for authorized emails
+  app.post("/api/admin/make-admin", isAuthenticated, async (req: any, res) => {
+    try {
+      const userEmail = req.user.claims.email;
+      const userId = req.user.claims.sub;
+      
+      // Security: Only allow specific emails to become admin
+      const AUTHORIZED_ADMIN_EMAILS = (process.env.ADMIN_EMAILS || '').split(',').map(e => e.trim()).filter(Boolean);
+      
+      if (!AUTHORIZED_ADMIN_EMAILS.includes(userEmail)) {
+        return res.status(403).json({ message: "Not authorized to become admin" });
+      }
+      
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      const updatedUser = await storage.upsertUser({
+        ...user,
+        isAdmin: true,
+      });
+      
+      res.json({ message: "Admin access granted", user: updatedUser });
+    } catch (error) {
+      console.error("Error granting admin access:", error);
+      res.status(500).json({ message: "Failed to grant admin access" });
+    }
+  });
+
+  // Auth user route - returns current user info
+  app.get("/api/auth/user", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const userEmail = req.user.claims.email;
+      const firstName = req.user.claims.first_name;
+      const lastName = req.user.claims.last_name;
+      const profileImageUrl = req.user.claims.profile_image_url;
+      
+      // Get user from storage to check admin status
+      const userData = await storage.getUser(userId);
+      
+      res.json({
+        id: userId,
+        email: userEmail,
+        firstName: firstName,
+        lastName: lastName,
+        profileImageUrl: profileImageUrl,
+        isAdmin: userData?.isAdmin || false,
+      });
+    } catch (error) {
+      console.error("Error fetching user:", error);
+      res.status(500).json({ message: "Failed to fetch user data" });
+    }
+  });
+
+  // Protected admin route to check admin status
+  app.get("/api/admin/status", isAdmin, async (req: any, res) => {
+    res.json({ message: "Admin access confirmed", isAdmin: true });
   });
 
   const httpServer = createServer(app);
