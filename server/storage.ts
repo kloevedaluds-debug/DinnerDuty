@@ -393,19 +393,22 @@ export class MemStorage implements IStorage {
   }
 
   async upsertUser(userData: UpsertUser): Promise<User> {
-    const existing = this.users.get(userData.id);
+    // Ensure we have a user ID (from auth system or generate one)
+    const userId = userData.id || randomUUID();
+    const existing = this.users.get(userId);
     
     if (existing) {
       const updated: User = {
         ...existing,
         ...userData,
+        id: userId,
         updatedAt: new Date(),
       };
-      this.users.set(userData.id, updated);
+      this.users.set(userId, updated);
       return updated;
     } else {
       const newUser: User = {
-        id: userData.id,
+        id: userId,
         email: userData.email ?? null,
         firstName: userData.firstName ?? null,
         lastName: userData.lastName ?? null,
@@ -414,7 +417,7 @@ export class MemStorage implements IStorage {
         createdAt: new Date(),
         updatedAt: new Date(),
       };
-      this.users.set(userData.id, newUser);
+      this.users.set(userId, newUser);
       return newUser;
     }
   }
