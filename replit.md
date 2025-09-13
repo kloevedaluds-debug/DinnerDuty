@@ -6,7 +6,14 @@ This is a task assignment web application built for managing household chores am
 
 Preferred communication style: Simple, everyday language.
 
-## Recent User Requests (August 2025)
+## Recent User Requests (September 2025)
+- App prepared for Render deployment with dual-mode authentication system
+- Admin functionality restricted to specific email: bsksi@aarhus.dk for production
+- File-based data persistence implemented for reliable data storage across restarts
+- Basic authentication system added for non-Replit environments
+- Complete admin content management system with web interface
+
+## Previous Requests (August 2025)
 - Users should be able to input their own names instead of selecting from predefined lists
 - Kitchen preference should be a simple Yes/No toggle instead of name input
 - All changes should be saved automatically (no manual save button needed)

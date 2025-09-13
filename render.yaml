@@ -14,7 +14,7 @@ services:
       - key: SESSION_SECRET
         generateValue: true
       - key: ADMIN_EMAILS
-        sync: false
+        value: bsksi@aarhus.dk
     disk:
       name: data-disk
       mountPath: /opt/render/project/src/data
