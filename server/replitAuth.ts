@@ -147,6 +147,13 @@ export async function setupAuth(app: Express) {
       res.redirect("/?login=basic");
     });
 
+    // Add logout alias for compatibility
+    app.get("/api/logout", (req, res) => {
+      req.session.destroy(() => {
+        res.redirect("/");
+      });
+    });
+
     return; // Skip Replit Auth setup in basic mode
   }
 

@@ -1,13 +1,22 @@
 services:
   - type: web
     name: dinnerduty
-    env: node
+    runtime: node
     plan: free
-    buildCommand: npm install && npm run build
+    region: frankfurt  
+    buildCommand: npm ci && npm run build
     startCommand: npm start
     envVars:
       - key: NODE_ENV
         value: production
-      - key: DATABASE_URL
+      - key: AUTH_MODE
+        value: basic
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: ADMIN_EMAILS
         sync: false
+    disk:
+      name: data-disk
+      mountPath: /opt/render/project/src/data
+      sizeGB: 1
     healthCheckPath: /
