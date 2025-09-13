@@ -9,9 +9,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Setup authentication middleware
   await setupAuth(app);
 
-  // Auth routes
+  // Auth routes - support both auth modes
   app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
     try {
+      const AUTH_MODE = process.env.AUTH_MODE || (process.env.REPL_ID ? "replit" : "basic");
+      
+      if (AUTH_MODE === "basic") {
+        const sessionUser = (req.session as any).user;
+        return res.json({
+          id: sessionUser.id,
+          email: sessionUser.email,
+          firstName: sessionUser.firstName,
+          lastName: sessionUser.lastName,
+          profileImageUrl: null,
+          isAdmin: sessionUser.isAdmin
+        });
+      }
+      
+      // Replit mode
       const userId = req.user.claims.sub;
       const user = await storage.getUser(userId);
       res.json(user);
@@ -212,8 +227,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Secure admin grant - only for authorized emails
   app.post("/api/admin/make-admin", isAuthenticated, async (req: any, res) => {
     try {
-      const userEmail = req.user.claims.email;
-      const userId = req.user.claims.sub;
+      const AUTH_MODE = process.env.AUTH_MODE || (process.env.REPL_ID ? "replit" : "basic");
+      let userEmail: string;
+      let userId: string;
+      
+      if (AUTH_MODE === "basic") {
+        const sessionUser = (req.session as any).user;
+        userEmail = sessionUser.email;
+        userId = sessionUser.id;
+      } else {
+        userEmail = req.user.claims.email;
+        userId = req.user.claims.sub;
+      }
       
       // Security: Only allow specific emails to become admin
       const AUTHORIZED_ADMIN_EMAILS = (process.env.ADMIN_EMAILS || '').split(',').map(e => e.trim()).filter(Boolean);
@@ -242,30 +267,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Auth user route - returns current user info
-  app.get("/api/auth/user", isAuthenticated, async (req: any, res) => {
-    try {
-      const userId = req.user.claims.sub;
-      const userEmail = req.user.claims.email;
-      const firstName = req.user.claims.first_name;
-      const lastName = req.user.claims.last_name;
-      const profileImageUrl = req.user.claims.profile_image_url;
-      
-      // Get user from storage to check admin status
-      const userData = await storage.getUser(userId);
-      
-      res.json({
-        id: userId,
-        email: userEmail,
-        firstName: firstName,
-        lastName: lastName,
-        profileImageUrl: profileImageUrl,
-        isAdmin: userData?.isAdmin || false,
-      });
-    } catch (error) {
-      console.error("Error fetching user:", error);
-      res.status(500).json({ message: "Failed to fetch user data" });
-    }
-  });
 
   // Protected admin route to check admin status
   app.get("/api/admin/status", isAdmin, async (req: any, res) => {

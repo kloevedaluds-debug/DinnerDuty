@@ -15,6 +15,8 @@ const REPLIT_DOMAINS = process.env.REPLIT_DOMAINS || "localhost:5000";
 const DATABASE_URL = process.env.DATABASE_URL;
 const SESSION_SECRET = process.env.SESSION_SECRET || "development-secret-key";
 const NODE_ENV = process.env.NODE_ENV || "development";
+const AUTH_MODE = process.env.AUTH_MODE || (process.env.REPL_ID ? "replit" : "basic");
+const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || '').split(',').map(e => e.trim()).filter(Boolean);
 
 // Create memory store for sessions in development
 const MemoryStoreFactory = MemoryStore(session);
@@ -95,6 +97,59 @@ export async function setupAuth(app: Express) {
   app.use(passport.initialize());
   app.use(passport.session());
 
+  // Basic authentication routes for non-Replit environments
+  if (AUTH_MODE === "basic") {
+    // Basic login route
+    app.post("/api/auth/basic/login", async (req, res) => {
+      try {
+        const { email, firstName, lastName } = req.body;
+        if (!email) {
+          return res.status(400).json({ message: "Email is required" });
+        }
+
+        // Create or update user
+        const userId = email;
+        await storage.upsertUser({
+          id: userId,
+          email,
+          firstName: firstName || '',
+          lastName: lastName || '',
+          profileImageUrl: null,
+          isAdmin: ADMIN_EMAILS.includes(email)
+        });
+
+        // Set session
+        (req.session as any).user = {
+          id: userId,
+          email,
+          firstName,
+          lastName,
+          isAdmin: ADMIN_EMAILS.includes(email),
+          expires_at: Math.floor(Date.now() / 1000) + (7 * 24 * 60 * 60) // 1 week
+        };
+
+        res.json({ success: true, user: { email, firstName, lastName } });
+      } catch (error) {
+        console.error("Basic login error:", error);
+        res.status(500).json({ message: "Login failed" });
+      }
+    });
+
+    // Basic logout route
+    app.post("/api/auth/basic/logout", (req, res) => {
+      req.session.destroy(() => {
+        res.json({ success: true });
+      });
+    });
+
+    // Redirect /api/login to basic login in basic mode
+    app.get("/api/login", (req, res) => {
+      res.redirect("/?login=basic");
+    });
+
+    return; // Skip Replit Auth setup in basic mode
+  }
+
   const config = await getOidcConfig();
 
   const verify: VerifyFunction = async (
@@ -150,6 +205,22 @@ export async function setupAuth(app: Express) {
 }
 
 export const isAuthenticated: RequestHandler = async (req, res, next) => {
+  // Basic auth mode
+  if (AUTH_MODE === "basic") {
+    const sessionUser = (req.session as any).user;
+    if (!sessionUser || !sessionUser.expires_at) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    const now = Math.floor(Date.now() / 1000);
+    if (now <= sessionUser.expires_at) {
+      return next();
+    }
+
+    return res.status(401).json({ message: "Session expired" });
+  }
+
+  // Replit auth mode
   const user = req.user as any;
 
   if (!req.isAuthenticated() || !user.expires_at) {
@@ -180,6 +251,21 @@ export const isAuthenticated: RequestHandler = async (req, res, next) => {
 
 // Admin middleware - checks if user is admin
 export const isAdmin: RequestHandler = async (req, res, next) => {
+  // Basic auth mode
+  if (AUTH_MODE === "basic") {
+    const sessionUser = (req.session as any).user;
+    if (!sessionUser) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+    
+    if (!sessionUser.isAdmin) {
+      return res.status(403).json({ message: "Admin access required" });
+    }
+    
+    return next();
+  }
+
+  // Replit auth mode
   const user = req.user as any;
   
   if (!req.isAuthenticated() || !user.claims?.sub) {
