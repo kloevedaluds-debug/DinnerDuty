@@ -156,7 +156,7 @@ export default function Home() {
     if (assignment?.tasks?.kok && !newResidentInputs['dish-cook']) {
       setNewResidentInputs(prev => ({
         ...prev,
-        'dish-cook': assignment.tasks.kok
+        'dish-cook': assignment.tasks.kok || ''
       }));
     }
   }, [assignment?.dishOfTheDay, assignment?.tasks?.kok, newResidentInputs]);
